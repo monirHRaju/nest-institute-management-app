@@ -4,6 +4,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import fastifyCookie from '@fastify/cookie';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -12,7 +13,12 @@ async function bootstrap() {
     new FastifyAdapter({ logger: process.env.NODE_ENV !== 'production' }),
   );
 
-  // ── CORS ───────────────────────────────────────────────────────────────────
+  // ── Cookie plugin (required for refresh_token cookie) ─────────────────────
+  await app.register(fastifyCookie as any, {
+    secret: process.env.COOKIE_SECRET ?? 'fallback-secret-change-in-prod',
+  });
+
+  // ── CORS ──────────────────────────────────────────────────────────────────
   const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
     .split(',')
     .map((o) => o.trim());
@@ -23,16 +29,17 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
-  // ── Global prefix ──────────────────────────────────────────────────────────
+  // ── Global prefix ─────────────────────────────────────────────────────────
   app.setGlobalPrefix('api/v1');
 
-  // ── Swagger (dev only) ─────────────────────────────────────────────────────
+  // ── Swagger (dev only) ────────────────────────────────────────────────────
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('Institute Management SaaS API')
-      .setDescription('REST API for the multi-tenant institute management platform')
+      .setDescription('Multi-tenant institute management platform')
       .setVersion('1.0')
       .addBearerAuth()
+      .addCookieAuth('refresh_token')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
