@@ -1,0 +1,39 @@
+{
+  "common": {
+    "appName": "EduManage",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search...",
+    "noResults": "No results found.",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "courses": "Courses",
+    "batches": "Batches",
+    "fees": "Fees",
+    "attendance": "Attendance",
+    "reports": "Reports",
+    "settings": "Settings",
+    "tenants": "Tenants",
+    "analytics": "Analytics",
+    "myBatches": "My Batches",
+    "myFees": "My Fees",
+    "myCourses": "My Courses"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to your institute dashboard",
+    "forgotPassword": "Forgot password?"
+  }
+}

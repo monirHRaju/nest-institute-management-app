@@ -1,0 +1,128 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Supabase Pooler URL (port 6543) — used at runtime via PgBouncer
+  url       = env("DATABASE_URL")
+  // Supabase Direct URL (port 5432) — used only for migrations
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  STAFF
+  INSTRUCTOR
+  STUDENT
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+}
+
+enum TenantPlan {
+  FREE
+  BASIC
+  PRO
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT
+// The top-level entity. Every institute/coaching center is a Tenant.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique // subdomain: abc-institute → abc-institute.yourapp.com
+  status      TenantStatus @default(TRIAL)
+  plan        TenantPlan   @default(FREE)
+
+  // Per-tenant public site customization stored as JSON
+  // Shape defined by TenantThemeConfig in @repo/shared
+  themeConfig Json         @default("{}")
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  users       User[]
+  sessions    Session[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER
+// Platform-level users. SUPER_ADMIN has tenantId = null.
+// All other roles are scoped to a tenant.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role     @default(STAFF)
+  isActive     Boolean  @default(true)
+
+  // null only for SUPER_ADMIN
+  tenantId     String?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  sessions     Session[]
+
+  // Unique email per tenant (SUPER_ADMIN: email unique globally)
+  @@unique([email, tenantId])
+  @@index([tenantId])
+  @@index([email])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION
+// Stores refresh tokens. One user can have multiple active sessions
+// (multiple devices). Invalidated on logout.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Session {
+  id           String   @id @default(cuid())
+  refreshToken String   @unique
+  expiresAt    DateTime
+  userAgent    String?
+  ipAddress    String?
+  isRevoked    Boolean  @default(false)
+
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Denormalized for quick tenant-level session queries
+  tenantId     String?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([refreshToken])
+  @@map("sessions")
+}

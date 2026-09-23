@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tenant CSS variables — overridden at runtime via TenantThemeProvider */
+:root {
+  --tenant-primary: #2563eb;
+  --tenant-accent: #f59e0b;
+}

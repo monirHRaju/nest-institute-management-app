@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About Us",
+    "contact": "Contact",
+    "admission": "Apply Now"
+  },
+  "hero": {
+    "tagline": "Empowering Your Future",
+    "cta": "View Courses"
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  }
+}
