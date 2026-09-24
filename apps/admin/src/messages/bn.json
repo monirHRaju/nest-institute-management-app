@@ -1,39 +1,30 @@
 {
-  "common": {
-    "appName": "এডুম্যানেজ",
-    "loading": "লোড হচ্ছে...",
-    "save": "সংরক্ষণ করুন",
-    "cancel": "বাতিল",
-    "delete": "মুছুন",
-    "edit": "সম্পাদনা",
-    "add": "যোগ করুন",
-    "search": "খুঁজুন...",
-    "noResults": "কোনো ফলাফল পাওয়া যায়নি।",
-    "confirm": "নিশ্চিত করুন",
-    "back": "পিছনে"
+  "auth": {
+    "login": "লগইন",
+    "email": "ইমেইল এড্রেস",
+    "password": "পাসওয়ার্ড",
+    "submit": "সাইন ইন করুন",
+    "emailPlaceholder": "name@example.com",
+    "passwordPlaceholder": "আপনার পাসওয়ার্ড দিন",
+    "invalidCredentials": "ভুল ইমেইল বা পাসওয়ার্ড",
+    "success": "সফলভাবে লগইন হয়েছে",
+    "tagline": "ফিরে আসার জন্য স্বাগতম! আপনার অ্যাকাউন্টে লগইন করুন।"
   },
   "nav": {
     "dashboard": "ড্যাশবোর্ড",
-    "students": "শিক্ষার্থী",
+    "tenants": "ইনস্টিটিউট",
+    "students": "ছাত্র-ছাত্রী",
     "courses": "কোর্স",
     "batches": "ব্যাচ",
-    "fees": "ফি",
+    "fees": "ফিস",
     "attendance": "উপস্থিতি",
     "reports": "রিপোর্ট",
+    "analytics": "অ্যানালিটিক্স",
     "settings": "সেটিংস",
-    "tenants": "প্রতিষ্ঠান",
-    "analytics": "বিশ্লেষণ",
     "myBatches": "আমার ব্যাচ",
-    "myFees": "আমার ফি",
-    "myCourses": "আমার কোর্স"
-  },
-  "auth": {
-    "login": "লগইন",
-    "logout": "লগআউট",
-    "email": "ইমেইল",
-    "password": "পাসওয়ার্ড",
-    "loginTitle": "স্বাগতম",
-    "loginSubtitle": "আপনার প্রতিষ্ঠান ড্যাশবোর্ডে সাইন ইন করুন",
-    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?"
+    "myCourses": "আমার কোর্স",
+    "myFees": "আমার ফিস",
+    "profile": "প্রোফাইল",
+    "logout": "লগআউট"
   }
 }

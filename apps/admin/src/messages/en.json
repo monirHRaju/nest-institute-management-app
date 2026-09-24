@@ -1,39 +1,30 @@
 {
-  "common": {
-    "appName": "EduManage",
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "add": "Add",
-    "search": "Search...",
-    "noResults": "No results found.",
-    "confirm": "Confirm",
-    "back": "Back"
+  "auth": {
+    "login": "Login",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Sign In",
+    "emailPlaceholder": "name@example.com",
+    "passwordPlaceholder": "Enter your password",
+    "invalidCredentials": "Invalid email or password",
+    "success": "Logged in successfully",
+    "tagline": "Welcome back! Please login to your account."
   },
   "nav": {
     "dashboard": "Dashboard",
+    "tenants": "Tenants",
     "students": "Students",
     "courses": "Courses",
     "batches": "Batches",
     "fees": "Fees",
     "attendance": "Attendance",
     "reports": "Reports",
-    "settings": "Settings",
-    "tenants": "Tenants",
     "analytics": "Analytics",
+    "settings": "Settings",
     "myBatches": "My Batches",
+    "myCourses": "My Courses",
     "myFees": "My Fees",
-    "myCourses": "My Courses"
-  },
-  "auth": {
-    "login": "Login",
-    "logout": "Logout",
-    "email": "Email",
-    "password": "Password",
-    "loginTitle": "Welcome back",
-    "loginSubtitle": "Sign in to your institute dashboard",
-    "forgotPassword": "Forgot password?"
+    "profile": "Profile",
+    "logout": "Log out"
   }
 }

@@ -4,6 +4,8 @@ import { getMessages } from 'next-intl/server';
 import { ThemeProvider } from 'next-themes';
 import { Geist, Geist_Mono } from 'next/font/google';
 import '@/styles/globals.css';
+import QueryProvider from '@/providers/query-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,7 +39,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <NextIntlClientProvider messages={messages}>
-            {children}
+            <QueryProvider>
+              {children}
+              <Toaster />
+            </QueryProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>
