@@ -16,6 +16,8 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
+import { PublicModule } from './public/public.module';
+
 @Module({
   imports: [
     // ── Global env config ──────────────────────────────────────────────────
@@ -33,7 +35,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     // ── Feature modules ───────────────────────────────────────────────────
     AuthModule,
     TenantsModule,
-    // PublicModule  ← Segment 1.5
+    PublicModule,
     // CoursesModule ← Phase 2
     // StudentsModule ← Phase 2
     // FeesModule ← Phase 3
