@@ -59,6 +59,9 @@ model Tenant {
   // Relations
   users       User[]
   sessions    Session[]
+  categories  Category[]
+  courses     Course[]
+  batches     Batch[]
 
   @@index([slug])
   @@map("tenants")
@@ -89,6 +92,7 @@ model User {
 
   // Relations
   sessions     Session[]
+  instructorBatches Batch[]
 
   // Unique email per tenant (SUPER_ADMIN: email unique globally)
   @@unique([email, tenantId])
@@ -125,4 +129,85 @@ model Session {
   @@index([tenantId])
   @@index([refreshToken])
   @@map("sessions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY
+// Course categories.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  courses     Course[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COURSE
+// Defines the templates/catalog items.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    String?  // e.g., "3 months"
+  fees        Float
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  batches     Batch[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([categoryId])
+  @@map("courses")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BATCH
+// A specific cohort for a course.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Batch {
+  id          String    @id @default(cuid())
+  name        String
+  startDate   DateTime?
+  endDate     DateTime?
+  schedule    String?
+  capacity    Int?
+
+  instructorId String?
+  instructor   User?    @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([courseId])
+  @@index([instructorId])
+  @@map("batches")
 }

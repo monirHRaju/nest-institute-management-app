@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
+  Tags,
 } from 'lucide-react';
 
 import {
@@ -60,6 +61,7 @@ export function AppSidebar() {
     : [
         { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
         { title: t('students'), url: '/dashboard/students', icon: Users },
+        { title: 'Categories', url: '/dashboard/categories', icon: Tags },
         { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },
         { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
         { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },

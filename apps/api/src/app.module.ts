@@ -17,6 +17,9 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
 import { PublicModule } from './public/public.module';
+import { CategoriesModule } from './categories/categories.module';
+import { CoursesModule } from './courses/courses.module';
+import { BatchesModule } from './batches/batches.module';
 
 @Module({
   imports: [
@@ -36,7 +39,9 @@ import { PublicModule } from './public/public.module';
     AuthModule,
     TenantsModule,
     PublicModule,
-    // CoursesModule ← Phase 2
+    CategoriesModule,
+    CoursesModule,
+    BatchesModule,
     // StudentsModule ← Phase 2
     // FeesModule ← Phase 3
   ],

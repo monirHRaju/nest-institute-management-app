@@ -56,3 +56,48 @@ export const CreateUserSchema = z.object({
 });
 
 export type CreateUserDto = z.infer<typeof CreateUserSchema>;
+
+// ─── Category ─────────────────────────────────────────────────────────────────
+
+export const CreateCategorySchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional(),
+});
+
+export type CreateCategoryDto = z.infer<typeof CreateCategorySchema>;
+
+export const UpdateCategorySchema = CreateCategorySchema.partial();
+export type UpdateCategoryDto = z.infer<typeof UpdateCategorySchema>;
+
+// ─── Course ───────────────────────────────────────────────────────────────────
+
+export const CreateCourseSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional(),
+  duration: z.string().optional(),
+  fees: z.coerce.number().min(0),
+  categoryId: z.string().optional(),
+});
+
+export type CreateCourseDto = z.infer<typeof CreateCourseSchema>;
+
+export const UpdateCourseSchema = CreateCourseSchema.partial();
+export type UpdateCourseDto = z.infer<typeof UpdateCourseSchema>;
+
+// ─── Batch ────────────────────────────────────────────────────────────────────
+
+export const CreateBatchSchema = z.object({
+  name: z.string().min(1).max(100),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  schedule: z.string().optional(),
+  capacity: z.coerce.number().int().min(1).optional(),
+  instructorId: z.string().optional(),
+  courseId: z.string().min(1),
+});
+
+export type CreateBatchDto = z.infer<typeof CreateBatchSchema>;
+
+export const UpdateBatchSchema = CreateBatchSchema.partial();
+export type UpdateBatchDto = z.infer<typeof UpdateBatchSchema>;
+
