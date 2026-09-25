@@ -42,12 +42,14 @@ export class AuthService {
   async validateCredentials(
     email: string,
     password: string,
-    tenantId: string | null,
+    providedTenantId: string | null,
   ): Promise<ValidatedUser | null> {
-    // Find user by email + tenantId
-    // SUPER_ADMIN: tenantId = null → find with tenantId IS NULL
-    const user = await this.prisma.user.findFirst({
-      where: { email, tenantId },
+    // If a tenant context is provided (e.g., subdomain), strict match it.
+    // If NOT provided (root admin domain login), find by email globally.
+    // We prioritize SUPER_ADMIN (tenantId: null) if multiple exist.
+    
+    const users = await this.prisma.user.findMany({
+      where: providedTenantId ? { email, tenantId: providedTenantId } : { email },
       select: {
         id: true,
         email: true,
@@ -59,6 +61,13 @@ export class AuthService {
         isActive: true,
       },
     });
+
+    if (users.length === 0) return null;
+
+    // Pick exact match if provided, otherwise prioritize SUPER_ADMIN, otherwise pick the first.
+    let user = users.find((u) => u.tenantId === providedTenantId);
+    if (!user) user = users.find((u) => u.tenantId === null);
+    if (!user) user = users[0];
 
     if (!user || !user.isActive) return null;
 

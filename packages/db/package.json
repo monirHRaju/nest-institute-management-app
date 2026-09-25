@@ -2,15 +2,19 @@
   "name": "@repo/db",
   "version": "0.1.0",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "scripts": {
+    "build": "tsc",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
@@ -26,6 +30,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.7.3",
     "prisma": "^5.20.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Role } from './types.js';
+import { Role } from './types';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
