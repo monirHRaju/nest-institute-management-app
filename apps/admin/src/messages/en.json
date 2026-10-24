@@ -14,6 +14,7 @@
     "dashboard": "Dashboard",
     "tenants": "Tenants",
     "students": "Students",
+    "instructors": "Instructors",
     "courses": "Courses",
     "batches": "Batches",
     "fees": "Fees",
@@ -120,5 +121,27 @@
     "receipt": "Receipt",
     "viewReceipt": "View Receipt",
     "printReceipt": "Print Receipt"
+  },
+  "instructors": {
+    "title": "Faculty & Instructors",
+    "subtitle": "Manage teaching staff, qualifications, specializations, and batch assignments.",
+    "addInstructor": "Add Instructor",
+    "editInstructor": "Edit Instructor",
+    "searchPlaceholder": "Search by name, email, phone, or designation...",
+    "allDesignations": "All Designations",
+    "activeFaculty": "Active Faculty",
+    "batchesAssigned": "Batches Assigned",
+    "totalSpecializations": "Specializations",
+    "noInstructorsFound": "No instructors found.",
+    "noInstructorsDesc": "Add your first teaching faculty member to assign them to class cohorts."
+  },
+  "reports": {
+    "title": "Executive Reports Hub",
+    "subtitle": "Holistic institutional intelligence across attendance, financial collections, and student admissions.",
+    "attendanceTab": "Attendance Performance",
+    "financialTab": "Financial & Collections",
+    "admissionsTab": "Admissions & Trends",
+    "exportCsv": "Export CSV",
+    "printPdf": "Print / PDF"
   }
 }

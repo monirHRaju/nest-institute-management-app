@@ -136,6 +136,13 @@ model User {
   role         Role     @default(STAFF)
   isActive     Boolean  @default(true)
 
+  // ── Teaching & Professional Profile (for INSTRUCTOR / STAFF) ──
+  designation    String?      // e.g. "Senior Web Development Instructor"
+  specialization String[]     @default([]) // e.g. ["Next.js", "Python", "UI/UX"]
+  qualification  String?      // e.g. "B.Sc. in Computer Science"
+  joiningDate    DateTime?    // Hire/joining date
+  bio            String?      // Short bio/experience summary
+
   // null only for SUPER_ADMIN
   tenantId     String?
   tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -154,6 +161,7 @@ model User {
   @@unique([email, tenantId])
   @@index([tenantId])
   @@index([email])
+  @@index([role])
   @@map("users")
 }
 

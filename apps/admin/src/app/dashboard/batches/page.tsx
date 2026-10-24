@@ -17,6 +17,8 @@ import {
   GraduationCap,
   CalendarDays,
   Layers,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { get, post, patch, del } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -45,6 +47,7 @@ interface Batch {
   classTime?: string | null;
   capacity?: number | null;
   courseId: string;
+  instructorId?: string | null;
   course: {
     id: string;
     name: string;
@@ -66,6 +69,7 @@ interface Batch {
 interface BatchFormData {
   name: string;
   courseId: string;
+  instructorId: string;
   startDate: string;
   endDate: string;
   capacity: string;
@@ -77,6 +81,7 @@ interface BatchFormData {
 const initialFormData: BatchFormData = {
   name: '',
   courseId: '',
+  instructorId: '',
   startDate: '',
   endDate: '',
   capacity: '',
@@ -93,6 +98,7 @@ export default function BatchesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourseFilter, setSelectedCourseFilter] = useState('');
   const [selectedDayFilter, setSelectedDayFilter] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'timetable'>('list');
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -114,6 +120,13 @@ export default function BatchesPage() {
     queryKey: ['courses'],
     queryFn: () => get<any[]>('/courses'),
   });
+
+  // Fetch instructors for assignment
+  const { data: instructorsRes } = useQuery<any>({
+    queryKey: ['instructors-list'],
+    queryFn: () => get<any>('/instructors?limit=100'),
+  });
+  const instructors = instructorsRes?.data || [];
 
   // Filtered batches
   const filteredBatches = useMemo(() => {
@@ -199,6 +212,7 @@ export default function BatchesPage() {
     setEditForm({
       name: batch.name || '',
       courseId: batch.courseId || '',
+      instructorId: batch.instructor?.id || batch.instructorId || '',
       startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
       endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
       capacity: batch.capacity ? String(batch.capacity) : '',
@@ -218,6 +232,7 @@ export default function BatchesPage() {
     createMutation.mutate({
       name: createForm.name.trim(),
       courseId: createForm.courseId,
+      instructorId: createForm.instructorId || undefined,
       startDate: createForm.startDate ? new Date(createForm.startDate).toISOString() : undefined,
       endDate: createForm.endDate ? new Date(createForm.endDate).toISOString() : undefined,
       capacity: createForm.capacity ? Number(createForm.capacity) : undefined,
@@ -238,6 +253,7 @@ export default function BatchesPage() {
       data: {
         name: editForm.name.trim(),
         courseId: editForm.courseId,
+        instructorId: editForm.instructorId || null,
         startDate: editForm.startDate ? new Date(editForm.startDate).toISOString() : null,
         endDate: editForm.endDate ? new Date(editForm.endDate).toISOString() : null,
         capacity: editForm.capacity ? Number(editForm.capacity) : null,
@@ -256,9 +272,31 @@ export default function BatchesPage() {
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground mt-1 text-sm">{t('subtitle')}</p>
         </div>
-        <Button onClick={handleOpenCreate} className="shadow-sm">
-          <Plus className="mr-2 h-4 w-4" /> {t('newBatch')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center border rounded-lg p-0.5 bg-muted/30">
+            <Button
+              type="button"
+              size="sm"
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              className="h-8 text-xs gap-1.5"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-3.5 w-3.5" /> List View
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={viewMode === 'timetable' ? 'secondary' : 'ghost'}
+              className="h-8 text-xs gap-1.5"
+              onClick={() => setViewMode('timetable')}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" /> Weekly Timetable
+            </Button>
+          </div>
+          <Button onClick={handleOpenCreate} className="shadow-sm">
+            <Plus className="mr-2 h-4 w-4" /> {t('newBatch')}
+          </Button>
+        </div>
       </div>
 
       {/* KPI Overview Cards */}
@@ -326,7 +364,76 @@ export default function BatchesPage() {
         </Card>
       </div>
 
-      {/* Filter & Search Bar */}
+      {viewMode === 'timetable' ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+            {ALL_DAYS.map((day) => {
+              const dayBatches = batches.filter(
+                (b) => b.classDays && b.classDays.includes(day.key),
+              );
+              return (
+                <div key={day.key} className="space-y-2 border rounded-xl p-3 bg-card shadow-sm">
+                  <div className="pb-2 border-b flex items-center justify-between">
+                    <span className="font-bold text-xs uppercase text-primary tracking-wide">
+                      {day.label}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+                      {dayBatches.length}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2 min-h-[140px]">
+                    {dayBatches.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-[11px] text-muted-foreground/60 italic py-8">
+                        No classes
+                      </div>
+                    ) : (
+                      dayBatches.map((b) => (
+                        <div
+                          key={b.id}
+                          className="p-2.5 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors text-xs space-y-1.5"
+                        >
+                          <div className="font-semibold text-foreground truncate">{b.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {b.course?.name}
+                          </div>
+                          {b.classTime && (
+                            <div className="flex items-center gap-1 text-[10px] text-primary font-medium">
+                              <Clock className="h-3 w-3" />
+                              <span>{b.classTime}</span>
+                            </div>
+                          )}
+                          {b.instructor && (
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <GraduationCap className="h-3 w-3" />
+                              <span className="truncate">
+                                {b.instructor.firstName} {b.instructor.lastName}
+                              </span>
+                            </div>
+                          )}
+                          <div className="pt-1 border-t flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>{b._count?.enrollments || 0} students</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 px-1.5 text-[10px]"
+                              onClick={() => handleOpenEdit(b)}
+                            >
+                              Edit
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Filter & Search Bar */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -573,6 +680,8 @@ export default function BatchesPage() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
 
       {/* Dialog: Create New Batch */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -607,6 +716,38 @@ export default function BatchesPage() {
                 {courses.map((c: any) => (
                   <option key={c.id} value={c.id}>
                     {c.name} (৳{c.fees})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Assigned Instructor</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.instructorId}
+                onChange={(e) => setEditForm({ ...editForm, instructorId: e.target.value })}
+              >
+                <option value="">Unassigned (None)</option>
+                {instructors.map((inst: any) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.firstName} {inst.lastName} {inst.designation ? `(${inst.designation})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Assigned Instructor</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={createForm.instructorId}
+                onChange={(e) => setCreateForm({ ...createForm, instructorId: e.target.value })}
+              >
+                <option value="">Unassigned (None)</option>
+                {instructors.map((inst: any) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.firstName} {inst.lastName} {inst.designation ? `(${inst.designation})` : ''}
                   </option>
                 ))}
               </select>
@@ -709,6 +850,22 @@ export default function BatchesPage() {
                 {courses.map((c: any) => (
                   <option key={c.id} value={c.id}>
                     {c.name} (৳{c.fees})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Assigned Instructor</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.instructorId}
+                onChange={(e) => setEditForm({ ...editForm, instructorId: e.target.value })}
+              >
+                <option value="">Unassigned (None)</option>
+                {instructors.map((inst: any) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.firstName} {inst.lastName} {inst.designation ? `(${inst.designation})` : ''}
                   </option>
                 ))}
               </select>

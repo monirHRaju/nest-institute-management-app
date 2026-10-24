@@ -23,6 +23,8 @@ import { BatchesModule } from './batches/batches.module';
 import { StudentsModule } from './students/students.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { FeesModule } from './fees/fees.module';
+import { InstructorsModule } from './instructors/instructors.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { FeesModule } from './fees/fees.module';
     StudentsModule,
     AttendanceModule,
     FeesModule,
+    InstructorsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -279,3 +279,53 @@ export const PaymentQuerySchema = PaginationSchema.extend({
 });
 
 export type PaymentQueryDto = z.infer<typeof PaymentQuerySchema>;
+
+// ─── Instructor & Faculty ─────────────────────────────────────────────────────
+
+export const CreateInstructorSchema = z.object({
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  firstName: z.string().min(1, 'First name is required').max(50),
+  lastName: z.string().min(1, 'Last name is required').max(50),
+  phone: z.string().max(20).optional().nullable(),
+  designation: z.string().max(100).optional().nullable(),
+  specialization: z.array(z.string()).optional().default([]),
+  qualification: z.string().max(100).optional().nullable(),
+  joiningDate: z.coerce.date().optional().nullable(),
+  bio: z.string().max(500).optional().nullable(),
+});
+
+export type CreateInstructorDto = z.infer<typeof CreateInstructorSchema>;
+
+export const UpdateInstructorSchema = z.object({
+  firstName: z.string().min(1).max(50).optional(),
+  lastName: z.string().min(1).max(50).optional(),
+  phone: z.string().max(20).optional().nullable(),
+  designation: z.string().max(100).optional().nullable(),
+  specialization: z.array(z.string()).optional(),
+  qualification: z.string().max(100).optional().nullable(),
+  joiningDate: z.coerce.date().optional().nullable(),
+  bio: z.string().max(500).optional().nullable(),
+  isActive: z.boolean().optional(),
+  password: z.string().min(6).optional(),
+});
+
+export type UpdateInstructorDto = z.infer<typeof UpdateInstructorSchema>;
+
+export const InstructorQuerySchema = PaginationSchema.extend({
+  search: z.string().optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+export type InstructorQueryDto = z.infer<typeof InstructorQuerySchema>;
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+export const ReportFilterSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  courseId: z.string().optional(),
+  batchId: z.string().optional(),
+});
+
+export type ReportFilterDto = z.infer<typeof ReportFilterSchema>;

@@ -14,6 +14,7 @@
     "dashboard": "ড্যাশবোর্ড",
     "tenants": "ইনস্টিটিউট",
     "students": "ছাত্র-ছাত্রী",
+    "instructors": "প্রশিক্ষক",
     "courses": "কোর্স",
     "batches": "ব্যাচ",
     "fees": "ফিস",
@@ -120,5 +121,27 @@
     "receipt": "মানি রিসিট",
     "viewReceipt": "রিসিট দেখুন",
     "printReceipt": "প্রিন্ট করুন"
+  },
+  "instructors": {
+    "title": "শিক্ষক ও প্রশিক্ষকবৃন্দ",
+    "subtitle": "শিক্ষক তালিকা, শিক্ষাগত যোগ্যতা, স্পেশালাইজেশন এবং ব্যাচ এসাইনমেন্ট পরিচালনা করুন।",
+    "addInstructor": "নতুন শিক্ষক যোগ করুন",
+    "editInstructor": "শিক্ষক তথ্য সংশোধন",
+    "searchPlaceholder": "নাম, ইমেইল, মোবাইল বা পদবী দিয়ে খুঁজুন...",
+    "allDesignations": "সকল পদবী",
+    "activeFaculty": "সক্রিয় শিক্ষক",
+    "batchesAssigned": "বরাদ্দকৃত ব্যাচ",
+    "totalSpecializations": "দক্ষতার ক্ষেত্র",
+    "noInstructorsFound": "কোনো শিক্ষক পাওয়া যায়নি।",
+    "noInstructorsDesc": "ক্লাস পরিচালনার জন্য আপনার প্রতিষ্ঠানে প্রথম শিক্ষক যোগ করুন।"
+  },
+  "reports": {
+    "title": "ইনস্টিটিউট অ্যানালিটিক্স ও রিপোর্ট হাব",
+    "subtitle": "উপস্থিতি, ফি কালেকশন এবং নতুন ভর্তির তথ্য সমন্বিত রিপোর্ট।",
+    "attendanceTab": "উপস্থিতি রিপোর্ট",
+    "financialTab": "আর্থিক ও কালেকশন",
+    "admissionsTab": "ভর্তি ও ট্রেন্ড",
+    "exportCsv": "CSV ডাউনলোড",
+    "printPdf": "প্রিন্ট / PDF"
   }
 }

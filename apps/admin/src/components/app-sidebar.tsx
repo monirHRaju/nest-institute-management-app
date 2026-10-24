@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   Building2,
   Users,
+  GraduationCap,
   BookOpen,
   Calendar,
   CreditCard,
@@ -51,24 +52,35 @@ export function AppSidebar() {
 
   // Define nav items based on role
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isInstructor = user?.role === 'INSTRUCTOR';
 
-  const items = isSuperAdmin
-    ? [
-        { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
-        { title: t('tenants'), url: '/dashboard/tenants', icon: Building2 },
-        { title: t('settings'), url: '/dashboard/settings', icon: Settings },
-      ]
-    : [
-        { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
-        { title: t('students'), url: '/dashboard/students', icon: Users },
-        { title: 'Categories', url: '/dashboard/categories', icon: Tags },
-        { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },
-        { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
-        { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },
-        { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
-        { title: t('reports'), url: '/dashboard/reports', icon: BarChart },
-        { title: t('settings'), url: '/dashboard/settings', icon: Settings },
-      ];
+  let items = [
+    { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+    { title: t('students'), url: '/dashboard/students', icon: Users },
+    { title: t('instructors'), url: '/dashboard/instructors', icon: GraduationCap },
+    { title: 'Categories', url: '/dashboard/categories', icon: Tags },
+    { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },
+    { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
+    { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },
+    { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+    { title: t('reports'), url: '/dashboard/reports', icon: BarChart },
+    { title: t('settings'), url: '/dashboard/settings', icon: Settings },
+  ];
+
+  if (isSuperAdmin) {
+    items = [
+      { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+      { title: t('tenants'), url: '/dashboard/tenants', icon: Building2 },
+      { title: t('settings'), url: '/dashboard/settings', icon: Settings },
+    ];
+  } else if (isInstructor) {
+    items = [
+      { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+      { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
+      { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+      { title: t('students'), url: '/dashboard/students', icon: Users },
+    ];
+  }
 
   if (isLoading) return <Sidebar />;
 
@@ -81,7 +93,7 @@ export function AppSidebar() {
         </div>
         {user && !isSuperAdmin && (
           <div className="text-xs text-muted-foreground mt-1">
-            {user.tenantId} {/* Can map to tenant name later */}
+            {user.role} • {user.email}
           </div>
         )}
       </SidebarHeader>

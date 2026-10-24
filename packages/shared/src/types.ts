@@ -125,6 +125,37 @@ export interface TenantThemeConfig {
   address?: string;
 }
 
+// ─── Batch Types ──────────────────────────────────────────────────────────────
+
+export interface BatchRecord {
+  id: string;
+  name: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  schedule?: string | null;
+  classDays?: string[];
+  classTime?: string | null;
+  capacity?: number | null;
+  courseId: string;
+  instructorId?: string | null;
+  course?: {
+    id: string;
+    title?: string;
+    name?: string;
+  };
+  instructor?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+  } | null;
+  _count?: {
+    enrollments?: number;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ─── Attendance Types ─────────────────────────────────────────────────────────
 
 export interface AttendanceRecord {
@@ -291,4 +322,117 @@ export interface FinancialStatsSummary {
   totalPaymentsCount: number;
   methodBreakdown: Record<string, number>;
   recentPayments: PaymentRecord[];
+}
+
+// ─── Instructor & Faculty Types ───────────────────────────────────────────────
+
+export interface InstructorProfileRecord {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+  role: Role;
+  isActive: boolean;
+  designation?: string | null;
+  specialization: string[];
+  qualification?: string | null;
+  joiningDate?: string | null;
+  bio?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  instructorBatches?: Array<{
+    id: string;
+    name: string;
+    schedule?: string | null;
+    classDays: string[];
+    classTime?: string | null;
+    capacity?: number | null;
+    course?: {
+      id: string;
+      name: string;
+    };
+    _count?: {
+      enrollments: number;
+    };
+  }>;
+  _count?: {
+    instructorBatches: number;
+  };
+}
+
+export interface TimetableSlotItem {
+  batchId: string;
+  batchName: string;
+  courseId: string;
+  courseName: string;
+  instructorId?: string | null;
+  instructorName?: string | null;
+  classDays: string[];
+  classTime?: string | null;
+  studentCount: number;
+  capacity?: number | null;
+}
+
+// ─── Reports & Analytics Types ────────────────────────────────────────────────
+
+export interface AttendanceReportSummary {
+  totalSessions: number;
+  averageRate: number;
+  batchStats: Array<{
+    batchId: string;
+    batchName: string;
+    courseName: string;
+    totalSessions: number;
+    averageRate: number;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
+    excusedCount: number;
+  }>;
+  atRiskStudents: Array<{
+    studentId: string;
+    systemId: string;
+    name: string;
+    phone: string;
+    batchName: string;
+    rate: number;
+    sessions: number;
+  }>;
+}
+
+export interface FinancialReportSummary {
+  totalInvoiced: number;
+  totalCollected: number;
+  totalOutstanding: number;
+  collectionRate: number;
+  methodBreakdown: Record<string, number>;
+  monthlyCollections: Array<{
+    month: string;
+    amount: number;
+    count: number;
+  }>;
+  courseRevenue: Array<{
+    courseId: string;
+    courseName: string;
+    totalBilled: number;
+    totalCollected: number;
+    totalDue: number;
+  }>;
+}
+
+export interface AdmissionsReportSummary {
+  totalStudents: number;
+  activeStudents: number;
+  newAdmissionsThisMonth: number;
+  monthlyAdmissions: Array<{
+    month: string;
+    count: number;
+  }>;
+  courseDistribution: Array<{
+    courseId: string;
+    courseName: string;
+    count: number;
+    percentage: number;
+  }>;
 }
