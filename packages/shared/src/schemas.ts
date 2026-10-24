@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Role } from './types';
+import { Role, StudentStatus, EnrollmentStatus, AttendanceStatus } from './types';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
@@ -88,11 +88,13 @@ export type UpdateCourseDto = z.infer<typeof UpdateCourseSchema>;
 
 export const CreateBatchSchema = z.object({
   name: z.string().min(1).max(100),
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional(),
-  schedule: z.string().optional(),
-  capacity: z.coerce.number().int().min(1).optional(),
-  instructorId: z.string().optional(),
+  startDate: z.coerce.date().optional().nullable(),
+  endDate: z.coerce.date().optional().nullable(),
+  schedule: z.string().optional().nullable(),
+  classDays: z.array(z.string()).optional().default([]),
+  classTime: z.string().max(100).optional().nullable(),
+  capacity: z.coerce.number().int().min(1).optional().nullable(),
+  instructorId: z.string().optional().nullable(),
   courseId: z.string().min(1),
 });
 
@@ -100,4 +102,113 @@ export type CreateBatchDto = z.infer<typeof CreateBatchSchema>;
 
 export const UpdateBatchSchema = CreateBatchSchema.partial();
 export type UpdateBatchDto = z.infer<typeof UpdateBatchSchema>;
+
+// ─── Enrollment ───────────────────────────────────────────────────────────────
+
+export const CreateEnrollmentSchema = z.object({
+  courseId: z.string().min(1, 'Course is required'),
+  batchId: z.string().optional().nullable(),
+  rollNumber: z.string().max(50).optional().nullable(),
+  notes: z.string().max(500).optional().nullable(),
+  status: z.nativeEnum(EnrollmentStatus).default(EnrollmentStatus.ENROLLED),
+  classDays: z.array(z.string()).optional().default([]),
+  classTime: z.string().max(100).optional().nullable(),
+});
+
+export type CreateEnrollmentDto = z.infer<typeof CreateEnrollmentSchema>;
+
+export const UpdateEnrollmentSchema = z.object({
+  batchId: z.string().optional().nullable(),
+  status: z.nativeEnum(EnrollmentStatus).optional(),
+  rollNumber: z.string().max(50).optional().nullable(),
+  notes: z.string().max(500).optional().nullable(),
+  classDays: z.array(z.string()).optional(),
+  classTime: z.string().max(100).optional().nullable(),
+});
+
+export type UpdateEnrollmentDto = z.infer<typeof UpdateEnrollmentSchema>;
+
+// ─── Student ──────────────────────────────────────────────────────────────────
+
+export const CreateStudentSchema = z.object({
+  studentId: z.string().max(50).optional(), // Auto-generated if omitted
+  firstName: z.string().min(1, 'First name is required').max(50),
+  lastName: z.string().min(1, 'Last name is required').max(50),
+  email: z.string().email().optional().or(z.literal('')).nullable(),
+  phone: z.string().min(3, 'Phone is required').max(20),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional().nullable(),
+  dateOfBirth: z.coerce.date().optional().nullable(),
+  address: z.string().max(255).optional().nullable(),
+  guardianName: z.string().max(100).optional().nullable(),
+  guardianPhone: z.string().max(20).optional().nullable(),
+  guardianRelation: z.string().max(50).optional().nullable(),
+  status: z.nativeEnum(StudentStatus).default(StudentStatus.ACTIVE),
+  // Class schedule preferences
+  classDays: z.array(z.string()).optional().default([]),
+  classTime: z.string().max(100).optional().nullable(),
+  // Optional initial enrollment for 1-step admission
+  initialEnrollment: z
+    .object({
+      courseId: z.string().min(1, 'Course is required'),
+      batchId: z.string().optional().nullable(),
+      rollNumber: z.string().max(50).optional().nullable(),
+      classDays: z.array(z.string()).optional().default([]),
+      classTime: z.string().max(100).optional().nullable(),
+    })
+    .optional(),
+});
+
+export type CreateStudentDto = z.infer<typeof CreateStudentSchema>;
+
+export const UpdateStudentSchema = CreateStudentSchema.omit({
+  initialEnrollment: true,
+}).partial();
+
+export type UpdateStudentDto = z.infer<typeof UpdateStudentSchema>;
+
+export const StudentQuerySchema = PaginationSchema.extend({
+  search: z.string().optional(),
+  status: z.nativeEnum(StudentStatus).optional(),
+  courseId: z.string().optional(),
+  batchId: z.string().optional(),
+  classDay: z.string().optional(),
+  classTime: z.string().optional(),
+});
+
+export type StudentQueryDto = z.infer<typeof StudentQuerySchema>;
+
+// ─── Attendance ───────────────────────────────────────────────────────────────
+
+export const MarkAttendanceEntrySchema = z.object({
+  studentId: z.string().min(1, 'Student ID is required'),
+  status: z.nativeEnum(AttendanceStatus).default(AttendanceStatus.PRESENT),
+  notes: z.string().max(255).optional().nullable(),
+});
+
+export type MarkAttendanceEntryDto = z.infer<typeof MarkAttendanceEntrySchema>;
+
+export const SaveBatchAttendanceSchema = z.object({
+  batchId: z.string().min(1, 'Batch ID is required'),
+  date: z.string().min(1, 'Date is required'), // Format: YYYY-MM-DD
+  records: z.array(MarkAttendanceEntrySchema).min(1, 'At least one student record is required'),
+});
+
+export type SaveBatchAttendanceDto = z.infer<typeof SaveBatchAttendanceSchema>;
+
+export const UpdateAttendanceRecordSchema = z.object({
+  status: z.nativeEnum(AttendanceStatus).optional(),
+  notes: z.string().max(255).optional().nullable(),
+});
+
+export type UpdateAttendanceRecordDto = z.infer<typeof UpdateAttendanceRecordSchema>;
+
+export const AttendanceQuerySchema = PaginationSchema.extend({
+  batchId: z.string().optional(),
+  studentId: z.string().optional(),
+  date: z.string().optional(), // Specific single date YYYY-MM-DD
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export type AttendanceQueryDto = z.infer<typeof AttendanceQuerySchema>;
 

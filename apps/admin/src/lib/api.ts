@@ -28,6 +28,17 @@ apiClient.interceptors.request.use((config) => {
     const match = document.cookie.match(new RegExp('(^| )access_token=([^;]+)'));
     if (match && match[2]) {
       config.headers.Authorization = `Bearer ${match[2]}`;
+      try {
+        const parts = match[2].split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.tenantId) {
+            config.headers['x-tenant-id'] = payload.tenantId;
+          }
+        }
+      } catch {
+        // Ignore decode errors
+      }
     }
   }
   return config;

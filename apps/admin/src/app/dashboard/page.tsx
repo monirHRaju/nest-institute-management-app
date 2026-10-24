@@ -5,22 +5,42 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { Users, BookOpen, CreditCard, Calendar } from 'lucide-react';
 
+import { useQuery } from '@tanstack/react-query';
+import { get } from '@/lib/api';
+
 export default function DashboardPage() {
   const t = useTranslations('nav');
   const { user } = useAuth();
   
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  // Dummy stat data for UI shell
+  const { data: studentsRes } = useQuery({
+    queryKey: ['students-stats'],
+    queryFn: () => get<any>('/students?limit=1'),
+    enabled: !isSuperAdmin && !!user,
+  });
+
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => get<any[]>('/courses'),
+    enabled: !isSuperAdmin && !!user,
+  });
+
+  const { data: batches = [] } = useQuery({
+    queryKey: ['batches'],
+    queryFn: () => get<any[]>('/batches'),
+    enabled: !isSuperAdmin && !!user,
+  });
+
   const stats = isSuperAdmin
     ? [
         { title: t('tenants'), value: '12', icon: Users },
         { title: 'Total Revenue', value: '৳ 2.4M', icon: CreditCard },
       ]
     : [
-        { title: t('students'), value: '1,234', icon: Users },
-        { title: t('courses'), value: '25', icon: BookOpen },
-        { title: t('batches'), value: '42', icon: Calendar },
+        { title: t('students'), value: studentsRes?.meta?.total?.toString() || '0', icon: Users },
+        { title: t('courses'), value: courses.length.toString(), icon: BookOpen },
+        { title: t('batches'), value: batches.length.toString(), icon: Calendar },
         { title: t('fees'), value: '৳ 450K', icon: CreditCard },
       ];
 

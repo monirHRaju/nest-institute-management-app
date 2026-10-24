@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BatchesService } from './batches.service';
 import { CreateBatchDto, UpdateBatchDto, Role } from '@repo/shared';
 import { CurrentTenant } from '../common/decorators/current-tenant.decorator';
@@ -22,8 +22,8 @@ export class BatchesController {
   }
 
   @Get()
-  findAll(@CurrentTenant('id') tenantId: string, @CurrentUser() user: any) {
-    return this.batchesService.findAll(tenantId, user);
+  findAll(@CurrentTenant('id') tenantId: string, @CurrentUser() user: any, @Query('courseId') courseId?: string) {
+    return this.batchesService.findAll(tenantId, user, courseId);
   }
 
   @Get(':id')

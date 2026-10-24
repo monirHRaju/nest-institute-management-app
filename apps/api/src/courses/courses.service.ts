@@ -16,7 +16,7 @@ export class CoursesService {
   async findAll(tenantId: string) {
     return this.prisma.course.findMany({
       where: { tenantId },
-      include: { category: true },
+      include: { category: true, batches: { orderBy: { createdAt: 'desc' } } },
       orderBy: { createdAt: 'desc' },
     });
   }

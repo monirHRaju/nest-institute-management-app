@@ -13,15 +13,22 @@ export class BatchesService {
     });
   }
 
-  async findAll(tenantId: string, user: any) {
-    let whereClause: any = { tenantId };
+  async findAll(tenantId: string, user: any, courseId?: string) {
+    const whereClause: any = { tenantId };
+    if (courseId) {
+      whereClause.courseId = courseId;
+    }
     // If instructor, only return their own batches
     if (user.role === Role.INSTRUCTOR) {
       whereClause.instructorId = user.id;
     }
     return this.prisma.batch.findMany({
       where: whereClause,
-      include: { course: true, instructor: true },
+      include: {
+        course: true,
+        instructor: { select: { id: true, firstName: true, lastName: true, email: true } },
+        _count: { select: { enrollments: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

@@ -37,6 +37,29 @@ enum TenantPlan {
   PRO
 }
 
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  PASSED_OUT
+  DROPPED_OUT
+  SUSPENDED
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  ACTIVE
+  COMPLETED
+  DROPPED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT
 // The top-level entity. Every institute/coaching center is a Tenant.
@@ -62,6 +85,9 @@ model Tenant {
   categories  Category[]
   courses     Course[]
   batches     Batch[]
+  students    Student[]
+  enrollments Enrollment[]
+  attendance  Attendance[]
 
   @@index([slug])
   @@map("tenants")
@@ -93,6 +119,8 @@ model User {
   // Relations
   sessions     Session[]
   instructorBatches Batch[]
+  students     Student[]
+  markedAttendance  Attendance[]
 
   // Unique email per tenant (SUPER_ADMIN: email unique globally)
   @@unique([email, tenantId])
@@ -172,6 +200,7 @@ model Course {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   batches     Batch[]
+  enrollments Enrollment[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -192,6 +221,8 @@ model Batch {
   startDate   DateTime?
   endDate     DateTime?
   schedule    String?
+  classDays   String[]  @default([]) // e.g. ["SATURDAY", "MONDAY", "WEDNESDAY"]
+  classTime   String?   // e.g. "09:00 AM - 10:30 AM"
   capacity    Int?
 
   instructorId String?
@@ -203,6 +234,9 @@ model Batch {
   tenantId    String
   tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  enrollments Enrollment[]
+  attendance  Attendance[]
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -210,4 +244,118 @@ model Batch {
   @@index([courseId])
   @@index([instructorId])
   @@map("batches")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STUDENT
+// Registered student in a tenant institute.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Student {
+  id               String        @id @default(cuid())
+  studentId        String        // e.g. "STD-2026-0001" or institute roll/registration
+  firstName        String
+  lastName         String
+  email            String?
+  phone            String
+  gender           String?       // "MALE", "FEMALE", "OTHER"
+  dateOfBirth      DateTime?
+  address          String?
+  guardianName     String?
+  guardianPhone    String?
+  guardianRelation String?       // "Father", "Mother", "Guardian", etc.
+  status           StudentStatus @default(ACTIVE)
+
+  // Scheduling & Batch Time Preferences
+  classDays        String[]      @default([]) // e.g. ["SATURDAY", "MONDAY", "WEDNESDAY"]
+  classTime        String?       // e.g. "09:00 AM - 10:30 AM"
+
+  tenantId         String
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId           String?       // Optional link to User table for future student portal login
+  user             User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  enrollments      Enrollment[]
+  attendance       Attendance[]
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@unique([studentId, tenantId])
+  @@index([tenantId])
+  @@index([phone])
+  @@index([status])
+  @@map("students")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENROLLMENT
+// Student admission into a specific course and optional batch cohort.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Enrollment {
+  id             String           @id @default(cuid())
+  studentId      String
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  courseId       String
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  batchId        String?
+  batch          Batch?           @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  enrollmentDate DateTime         @default(now())
+  status         EnrollmentStatus @default(ENROLLED)
+  rollNumber     String?
+  notes          String?
+
+  // Specific schedule override per course enrollment
+  classDays      String[]         @default([])
+  classTime      String?
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([batchId])
+  @@map("enrollments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ATTENDANCE
+// Daily/Session attendance tracking per student and batch.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Attendance {
+  id           String           @id @default(cuid())
+  date         DateTime         @db.Date
+  status       AttendanceStatus @default(PRESENT)
+  notes        String?
+
+  batchId      String
+  batch        Batch            @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  studentId    String
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  markedById   String?
+  markedBy     User?            @relation(fields: [markedById], references: [id], onDelete: SetNull)
+
+  tenantId     String
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([studentId, batchId, date, tenantId])
+  @@index([tenantId])
+  @@index([batchId, date])
+  @@index([studentId])
+  @@map("attendance")
 }

@@ -18,7 +18,9 @@ export const TENANT_SCOPED_MODELS = [
   'Category',
   'Course',
   'Batch',
-  // Phase 2+: 'Student', 'Attendance'
+  'Student',
+  'Enrollment',
+  'Attendance',
   // Phase 3+: 'FeeStructure', 'FeeInvoice', 'Payment', 'Expense'
 ] as const;
 

@@ -30,7 +30,35 @@ export class TenantMiddleware implements NestMiddleware {
     const slug = this.resolveSlug(req);
 
     if (!slug) {
-      // No slug found — skip (SUPER_ADMIN or public routes handle this)
+      // Priority 3 (Local dev / SPA fallback): resolve by tenantId from JWT Bearer token or x-tenant-id header
+      const tenantId = this.resolveTenantIdFromAuth(req);
+      if (tenantId) {
+        const tenant = await this.prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            status: true,
+            plan: true,
+            themeConfig: true,
+          },
+        });
+
+        if (tenant) {
+          if (tenant.status === 'SUSPENDED') {
+            throw new ForbiddenException(
+              `Tenant "${tenant.slug}" is suspended. Please contact support.`,
+            );
+          }
+
+          req.tenant = {
+            ...tenant,
+            themeConfig: tenant.themeConfig as Record<string, unknown>,
+          };
+        }
+      }
+
       return next();
     }
 
@@ -82,6 +110,35 @@ export class TenantMiddleware implements NestMiddleware {
     // Skip if it's just 'localhost' or a bare IP
     if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'api') {
       return parts[0].toLowerCase();
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract tenant ID from explicit x-tenant-id header or decoded JWT Bearer token.
+   * Useful for local development and single-domain SPA setups.
+   */
+  private resolveTenantIdFromAuth(req: AppRequest): string | null {
+    const explicitId = req.headers['x-tenant-id'] as string | undefined;
+    if (explicitId?.trim()) return explicitId.trim();
+
+    const authHeader = req.headers['authorization'] as string | undefined;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim();
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(
+            Buffer.from(parts[1], 'base64').toString('utf8'),
+          );
+          if (typeof payload.tenantId === 'string' && payload.tenantId.trim()) {
+            return payload.tenantId.trim();
+          }
+        }
+      } catch {
+        // Ignore parsing issues
+      }
     }
 
     return null;

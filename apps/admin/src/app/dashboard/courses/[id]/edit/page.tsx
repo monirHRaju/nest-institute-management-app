@@ -42,6 +42,8 @@ export default function EditCoursePage() {
     onSuccess: () => {
       toast.success('Course updated');
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['batches'] });
     },
   });
 
@@ -51,6 +53,8 @@ export default function EditCoursePage() {
       toast.success('Batch created');
       setBatchData({ name: '', startDate: '', capacity: 0 });
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['batches'] });
     },
   });
 
@@ -59,6 +63,8 @@ export default function EditCoursePage() {
     onSuccess: () => {
       toast.success('Batch deleted');
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['batches'] });
     },
   });
 
