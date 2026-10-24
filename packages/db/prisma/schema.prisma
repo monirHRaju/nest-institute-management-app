@@ -60,6 +60,31 @@ enum AttendanceStatus {
   EXCUSED
 }
 
+enum FeeType {
+  ADMISSION
+  TUITION
+  EXAM
+  MATERIALS
+  OTHER
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BKASH
+  NAGAD
+  CARD
+  BANK_TRANSFER
+  OTHER
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT
 // The top-level entity. Every institute/coaching center is a Tenant.
@@ -88,6 +113,8 @@ model Tenant {
   students    Student[]
   enrollments Enrollment[]
   attendance  Attendance[]
+  feeInvoices FeeInvoice[]
+  payments    Payment[]
 
   @@index([slug])
   @@map("tenants")
@@ -117,10 +144,11 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  sessions     Session[]
+  sessions         Session[]
   instructorBatches Batch[]
-  students     Student[]
-  markedAttendance  Attendance[]
+  students         Student[]
+  markedAttendance Attendance[]
+  receivedPayments Payment[]
 
   // Unique email per tenant (SUPER_ADMIN: email unique globally)
   @@unique([email, tenantId])
@@ -201,6 +229,7 @@ model Course {
 
   batches     Batch[]
   enrollments Enrollment[]
+  feeInvoices FeeInvoice[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -278,6 +307,8 @@ model Student {
 
   enrollments      Enrollment[]
   attendance       Attendance[]
+  feeInvoices      FeeInvoice[]
+  payments         Payment[]
 
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -358,4 +389,83 @@ model Attendance {
   @@index([batchId, date])
   @@index([studentId])
   @@map("attendance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEE INVOICE
+// Invoices for student tuition, admission, exam, or course fees.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model FeeInvoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        // e.g. "INV-2026-0001"
+  title         String        // e.g. "Full Course Fee - Web Development"
+  feeType       FeeType       @default(TUITION)
+  amount        Float         // Gross amount
+  discount      Float         @default(0)
+  totalAmount   Float         // amount - discount
+  paidAmount    Float         @default(0)
+  dueAmount     Float         // totalAmount - paidAmount
+  dueDate       DateTime?
+  status        InvoiceStatus @default(UNPAID)
+  notes         String?
+
+  studentId     String
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  courseId      String?
+  course        Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  payments      Payment[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([invoiceNumber, tenantId])
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("fee_invoices")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYMENT
+// Transaction records for payment collections against invoices.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id            String        @id @default(cuid())
+  receiptNumber String        // e.g. "REC-2026-0001"
+  amount        Float
+  method        PaymentMethod @default(CASH)
+  transactionId String?       // TrxID from bKash / Nagad or bank transfer
+  paymentDate   DateTime      @default(now())
+  notes         String?
+
+  invoiceId     String
+  invoice       FeeInvoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  studentId     String
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  receivedById  String?
+  receivedBy    User?         @relation(fields: [receivedById], references: [id], onDelete: SetNull)
+
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([receiptNumber, tenantId])
+  @@index([tenantId])
+  @@index([invoiceId])
+  @@index([studentId])
+  @@index([paymentDate])
+  @@map("payments")
 }

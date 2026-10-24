@@ -48,6 +48,31 @@ export enum AttendanceStatus {
   EXCUSED = 'EXCUSED',
 }
 
+export enum FeeType {
+  ADMISSION = 'ADMISSION',
+  TUITION = 'TUITION',
+  EXAM = 'EXAM',
+  MATERIALS = 'MATERIALS',
+  OTHER = 'OTHER',
+}
+
+export enum InvoiceStatus {
+  UNPAID = 'UNPAID',
+  PARTIALLY_PAID = 'PARTIALLY_PAID',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  BKASH = 'BKASH',
+  NAGAD = 'NAGAD',
+  CARD = 'CARD',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  OTHER = 'OTHER',
+}
+
 export const DAYS_OF_WEEK = [
   'SATURDAY',
   'SUNDAY',
@@ -176,4 +201,94 @@ export interface BatchAttendanceStats {
     late: number;
     excused: number;
   };
+}
+
+// ─── Fee & Payment Types ──────────────────────────────────────────────────────
+
+export interface FeeInvoiceRecord {
+  id: string;
+  invoiceNumber: string;
+  title: string;
+  feeType: FeeType;
+  amount: number;
+  discount: number;
+  totalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  dueDate?: string | null;
+  status: InvoiceStatus;
+  notes?: string | null;
+  studentId: string;
+  courseId?: string | null;
+  tenantId: string;
+  createdAt: string;
+  updatedAt: string;
+  student?: {
+    id: string;
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string | null;
+  };
+  course?: {
+    id: string;
+    name: string;
+    fees: number;
+  } | null;
+  payments?: PaymentRecord[];
+}
+
+export interface PaymentRecord {
+  id: string;
+  receiptNumber: string;
+  amount: number;
+  method: PaymentMethod;
+  transactionId?: string | null;
+  paymentDate: string;
+  notes?: string | null;
+  invoiceId: string;
+  studentId: string;
+  receivedById?: string | null;
+  tenantId: string;
+  createdAt: string;
+  updatedAt: string;
+  invoice?: {
+    id: string;
+    invoiceNumber: string;
+    title: string;
+    totalAmount: number;
+    dueAmount: number;
+  };
+  student?: {
+    id: string;
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+  };
+  receivedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+export interface StudentLedgerSummary {
+  totalBilled: number;
+  totalPaid: number;
+  dueBalance: number;
+  invoices: FeeInvoiceRecord[];
+  payments: PaymentRecord[];
+}
+
+export interface FinancialStatsSummary {
+  totalInvoiced: number;
+  totalCollected: number;
+  totalOutstanding: number;
+  overdueCount: number;
+  totalInvoicesCount: number;
+  totalPaymentsCount: number;
+  methodBreakdown: Record<string, number>;
+  recentPayments: PaymentRecord[];
 }

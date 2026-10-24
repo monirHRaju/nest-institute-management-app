@@ -10,6 +10,8 @@ import {
   CreateEnrollmentDto,
   UpdateEnrollmentDto,
   StudentQueryDto,
+  FeeType,
+  InvoiceStatus,
 } from '@repo/shared';
 import { withTenant } from '@repo/db';
 
@@ -63,6 +65,33 @@ export class StudentsService {
             classTime: initialEnrollment.classTime || null,
           }),
         });
+
+        // Auto-generate initial course admission invoice if course has fees
+        const course = await tx.course.findFirst({
+          where: { id: initialEnrollment.courseId, tenantId },
+        });
+
+        if (course && course.fees > 0) {
+          const invYear = new Date().getFullYear();
+          const invCount = await tx.feeInvoice.count({ where: { tenantId } });
+          const invoiceNumber = `INV-${invYear}-${String(invCount + 1).padStart(4, '0')}`;
+          await tx.feeInvoice.create({
+            data: withTenant(tenantId, {
+              invoiceNumber,
+              title: `Course Admission - ${course.name}`,
+              feeType: FeeType.ADMISSION,
+              amount: course.fees,
+              discount: 0,
+              totalAmount: course.fees,
+              paidAmount: 0,
+              dueAmount: course.fees,
+              dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+              status: InvoiceStatus.UNPAID,
+              studentId: student.id,
+              courseId: course.id,
+            }),
+          });
+        }
 
         return tx.student.findUnique({
           where: { id: student.id },
@@ -252,21 +281,47 @@ export class StudentsService {
       }
     }
 
-    return this.prisma.enrollment.create({
-      data: withTenant(tenantId, {
-        studentId,
-        courseId: dto.courseId,
-        batchId: dto.batchId || null,
-        rollNumber: dto.rollNumber || null,
-        notes: dto.notes || null,
-        status: dto.status,
-        classDays: dto.classDays || [],
-        classTime: dto.classTime || null,
-      }),
-      include: {
-        course: true,
-        batch: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const enrollment = await tx.enrollment.create({
+        data: withTenant(tenantId, {
+          studentId,
+          courseId: dto.courseId,
+          batchId: dto.batchId || null,
+          rollNumber: dto.rollNumber || null,
+          notes: dto.notes || null,
+          status: dto.status,
+          classDays: dto.classDays || [],
+          classTime: dto.classTime || null,
+        }),
+        include: {
+          course: true,
+          batch: true,
+        },
+      });
+
+      if (course.fees > 0) {
+        const invYear = new Date().getFullYear();
+        const invCount = await tx.feeInvoice.count({ where: { tenantId } });
+        const invoiceNumber = `INV-${invYear}-${String(invCount + 1).padStart(4, '0')}`;
+        await tx.feeInvoice.create({
+          data: withTenant(tenantId, {
+            invoiceNumber,
+            title: `Course Enrollment - ${course.name}`,
+            feeType: FeeType.TUITION,
+            amount: course.fees,
+            discount: 0,
+            totalAmount: course.fees,
+            paidAmount: 0,
+            dueAmount: course.fees,
+            dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+            status: InvoiceStatus.UNPAID,
+            studentId,
+            courseId: course.id,
+          }),
+        });
+      }
+
+      return enrollment;
     });
   }
 

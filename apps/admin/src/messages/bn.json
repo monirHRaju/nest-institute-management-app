@@ -93,5 +93,32 @@
     "selectBatchPrompt": "উপস্থিতি দেখতে উপরের তালিকা থেকে একটি ব্যাচ নির্বাচন করুন।",
     "statsOverview": "ব্যাচ পরিসংখ্যান",
     "saveSuccess": "উপস্থিতি সফলভাবে সংরক্ষণ করা হয়েছে"
+  },
+  "fees": {
+    "title": "ফি এবং আর্থিক ব্যবস্থাপনা",
+    "subtitle": "কোর্স ফি, ইনভয়েস তৈরি, ডিজিটাল মানি রিসিট এবং ফি কালেকশন পরিচালনা করুন।",
+    "newInvoice": "নতুন ইনভয়েস",
+    "collectPayment": "ফি কালেকশন",
+    "totalInvoiced": "মোট ইনভয়েস",
+    "totalCollected": "মোট আদায়",
+    "outstandingDues": "মোট বকেয়া",
+    "overdueInvoices": "মেয়াদোত্তীর্ণ ইনভয়েস",
+    "invoicesTab": "ইনভয়েস তালিকা",
+    "paymentsTab": "পেমেন্ট লেনদেন",
+    "invoiceNumber": "ইনভয়েস নং",
+    "receiptNumber": "রিসিট নং",
+    "student": "শিক্ষার্থী",
+    "purpose": "বিবরণ",
+    "amount": "মোট ফি",
+    "paid": "পরিশোধ",
+    "due": "বকেয়া",
+    "status": "স্ট্যাটাস",
+    "dueDate": "পরিশোধের শেষ তারিখ",
+    "paymentDate": "পেমেন্টের তারিখ",
+    "method": "পদ্ধতি",
+    "actions": "অ্যাকশন",
+    "receipt": "মানি রিসিট",
+    "viewReceipt": "রিসিট দেখুন",
+    "printReceipt": "প্রিন্ট করুন"
   }
 }

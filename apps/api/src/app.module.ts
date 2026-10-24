@@ -22,6 +22,7 @@ import { CoursesModule } from './courses/courses.module';
 import { BatchesModule } from './batches/batches.module';
 import { StudentsModule } from './students/students.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { FeesModule } from './fees/fees.module';
 
 @Module({
   imports: [
@@ -46,7 +47,7 @@ import { AttendanceModule } from './attendance/attendance.module';
     BatchesModule,
     StudentsModule,
     AttendanceModule,
-    // FeesModule ← Phase 3
+    FeesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { Role, StudentStatus, EnrollmentStatus, AttendanceStatus } from './types';
+import {
+  Role,
+  StudentStatus,
+  EnrollmentStatus,
+  AttendanceStatus,
+  FeeType,
+  InvoiceStatus,
+  PaymentMethod,
+} from './types';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
@@ -212,3 +220,62 @@ export const AttendanceQuerySchema = PaginationSchema.extend({
 
 export type AttendanceQueryDto = z.infer<typeof AttendanceQuerySchema>;
 
+// ─── Fees & Billing ──────────────────────────────────────────────────────────
+
+export const CreateFeeInvoiceSchema = z.object({
+  studentId: z.string().min(1, 'Student ID is required'),
+  courseId: z.string().optional().nullable(),
+  title: z.string().min(1, 'Invoice title is required').max(150),
+  feeType: z.nativeEnum(FeeType).default(FeeType.TUITION),
+  amount: z.coerce.number().min(0, 'Amount must be non-negative'),
+  discount: z.coerce.number().min(0, 'Discount must be non-negative').default(0),
+  dueDate: z.coerce.date().optional().nullable(),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+export type CreateFeeInvoiceDto = z.infer<typeof CreateFeeInvoiceSchema>;
+
+export const UpdateFeeInvoiceSchema = z.object({
+  title: z.string().min(1).max(150).optional(),
+  feeType: z.nativeEnum(FeeType).optional(),
+  amount: z.coerce.number().min(0).optional(),
+  discount: z.coerce.number().min(0).optional(),
+  dueDate: z.coerce.date().optional().nullable(),
+  status: z.nativeEnum(InvoiceStatus).optional(),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+export type UpdateFeeInvoiceDto = z.infer<typeof UpdateFeeInvoiceSchema>;
+
+export const RecordPaymentSchema = z.object({
+  invoiceId: z.string().min(1, 'Invoice ID is required'),
+  amount: z.coerce.number().positive('Payment amount must be greater than 0'),
+  method: z.nativeEnum(PaymentMethod).default(PaymentMethod.CASH),
+  transactionId: z.string().max(100).optional().nullable(),
+  paymentDate: z.coerce.date().optional(),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+export type RecordPaymentDto = z.infer<typeof RecordPaymentSchema>;
+
+export const FeeInvoiceQuerySchema = PaginationSchema.extend({
+  search: z.string().optional(),
+  studentId: z.string().optional(),
+  courseId: z.string().optional(),
+  status: z.nativeEnum(InvoiceStatus).optional(),
+  feeType: z.nativeEnum(FeeType).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export type FeeInvoiceQueryDto = z.infer<typeof FeeInvoiceQuerySchema>;
+
+export const PaymentQuerySchema = PaginationSchema.extend({
+  invoiceId: z.string().optional(),
+  studentId: z.string().optional(),
+  method: z.nativeEnum(PaymentMethod).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+export type PaymentQueryDto = z.infer<typeof PaymentQuerySchema>;

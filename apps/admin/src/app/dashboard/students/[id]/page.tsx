@@ -21,8 +21,19 @@ import {
   Clock,
   CalendarDays,
   CalendarCheck,
+  CreditCard,
+  Receipt,
+  DollarSign,
+  ArrowDownLeft,
+  Wallet,
 } from 'lucide-react';
-import type { StudentAttendanceSummary } from '@repo/shared';
+import type {
+  StudentAttendanceSummary,
+  StudentLedgerSummary,
+  FeeInvoiceRecord,
+  PaymentRecord,
+} from '@repo/shared';
+import { PaymentReceiptModal } from '@/components/payment-receipt-modal';
 
 import { ClassScheduleSelector, ALL_DAYS } from '@/components/class-schedule-selector';
 
@@ -49,6 +60,18 @@ export default function StudentDetailsPage() {
   // Dialog states
   const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCollectPaymentOpen, setIsCollectPaymentOpen] = useState(false);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<FeeInvoiceRecord | null>(null);
+  const [activeReceiptPayment, setActiveReceiptPayment] = useState<PaymentRecord | null>(null);
+
+  // Collect payment form
+  const [paymentForm, setPaymentForm] = useState({
+    amount: '',
+    method: 'CASH',
+    transactionId: '',
+    paymentDate: new Date().toISOString().split('T')[0],
+    notes: '',
+  });
 
   // New enrollment form state
   const [enrollForm, setEnrollForm] = useState({
@@ -83,6 +106,61 @@ export default function StudentDetailsPage() {
     queryKey: ['student-attendance', studentId],
     queryFn: () => get<StudentAttendanceSummary>(`/attendance/students/${studentId}`),
   });
+
+  // Fetch student billing & payment ledger
+  const { data: ledger } = useQuery<StudentLedgerSummary>({
+    queryKey: ['student-ledger', studentId],
+    queryFn: () => get<StudentLedgerSummary>(`/fees/students/${studentId}/ledger`),
+  });
+
+  // Record Payment Mutation
+  const recordPaymentMutation = useMutation({
+    mutationFn: (payload: any) => post('/fees/payments', payload),
+    onSuccess: (res: any) => {
+      toast.success('Payment recorded successfully');
+      queryClient.invalidateQueries({ queryKey: ['student-ledger', studentId] });
+      setIsCollectPaymentOpen(false);
+      if (res) setActiveReceiptPayment(res);
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to record payment');
+    },
+  });
+
+  const handleOpenCollectPayment = (invoice: FeeInvoiceRecord) => {
+    setSelectedInvoiceForPayment(invoice);
+    setPaymentForm({
+      amount: String(invoice.dueAmount),
+      method: 'CASH',
+      transactionId: '',
+      paymentDate: new Date().toISOString().split('T')[0],
+      notes: '',
+    });
+    setIsCollectPaymentOpen(true);
+  };
+
+  const handleCollectPaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoiceForPayment) return;
+    const amt = Number(paymentForm.amount);
+    if (!amt || amt <= 0) {
+      toast.error('Payment amount must be greater than 0');
+      return;
+    }
+    if (amt > selectedInvoiceForPayment.dueAmount) {
+      toast.error(`Amount exceeds remaining due (৳${selectedInvoiceForPayment.dueAmount})`);
+      return;
+    }
+
+    recordPaymentMutation.mutate({
+      invoiceId: selectedInvoiceForPayment.id,
+      amount: amt,
+      method: paymentForm.method,
+      transactionId: paymentForm.transactionId.trim() || undefined,
+      paymentDate: paymentForm.paymentDate ? new Date(paymentForm.paymentDate).toISOString() : undefined,
+      notes: paymentForm.notes.trim() || undefined,
+    });
+  };
 
   // Fetch available courses for enrollment dialog
   const { data: courses = [] } = useQuery({
@@ -571,6 +649,186 @@ export default function StudentDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Fees & Billing Ledger Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Receipt className="h-5 w-5 text-primary" />
+                    Fees & Financial Ledger
+                  </CardTitle>
+                  <CardDescription>
+                    Billing invoices, fee balances, and payment transaction history.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  {ledger && (
+                    <Badge
+                      className={`text-xs px-2.5 py-0.5 font-semibold ${
+                        ledger.dueBalance <= 0
+                          ? 'bg-emerald-600 hover:bg-emerald-700'
+                          : 'bg-amber-600 hover:bg-amber-700'
+                      }`}
+                    >
+                      {ledger.dueBalance <= 0 ? 'Fully Paid' : `৳${ledger.dueBalance.toLocaleString()} Due`}
+                    </Badge>
+                  )}
+                  <Link href="/dashboard/fees">
+                    <Button variant="outline" size="sm" className="h-7 text-xs">
+                      All Fees
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Ledger Summary Stats */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg border bg-muted/20">
+                  <div className="text-xs text-muted-foreground font-medium">Total Invoiced</div>
+                  <div className="text-lg font-bold mt-0.5 text-foreground">
+                    ৳{(ledger?.totalBilled ?? 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700">
+                  <div className="text-xs font-medium">Total Paid</div>
+                  <div className="text-lg font-bold mt-0.5">
+                    ৳{(ledger?.totalPaid ?? 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 text-amber-700">
+                  <div className="text-xs font-medium">Outstanding Balance</div>
+                  <div className="text-lg font-bold mt-0.5">
+                    ৳{(ledger?.dueBalance ?? 0).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Invoices Table */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+                  Invoices ({ledger?.invoices?.length ?? 0})
+                </h4>
+                {!ledger?.invoices || ledger.invoices.length === 0 ? (
+                  <div className="text-center py-4 border border-dashed rounded-lg text-xs text-muted-foreground">
+                    No invoices issued for this student yet.
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-muted/40 border-b text-muted-foreground">
+                        <tr>
+                          <th className="py-2 px-3">Invoice #</th>
+                          <th className="py-2 px-3">Title</th>
+                          <th className="py-2 px-3 text-right">Total</th>
+                          <th className="py-2 px-3 text-right">Paid</th>
+                          <th className="py-2 px-3 text-right">Due</th>
+                          <th className="py-2 px-3 text-center">Status</th>
+                          <th className="py-2 px-3 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {ledger.invoices.map((inv) => (
+                          <tr key={inv.id} className="hover:bg-muted/10">
+                            <td className="py-2 px-3 font-mono font-medium">{inv.invoiceNumber}</td>
+                            <td className="py-2 px-3">{inv.title}</td>
+                            <td className="py-2 px-3 text-right font-medium">৳{inv.totalAmount.toLocaleString()}</td>
+                            <td className="py-2 px-3 text-right text-emerald-600 font-medium">৳{inv.paidAmount.toLocaleString()}</td>
+                            <td className="py-2 px-3 text-right text-amber-600 font-bold">৳{inv.dueAmount.toLocaleString()}</td>
+                            <td className="py-2 px-3 text-center">
+                              <Badge
+                                variant={inv.status === 'PAID' ? 'default' : inv.status === 'PARTIALLY_PAID' ? 'secondary' : 'outline'}
+                                className={`text-[10px] px-1.5 py-0 ${
+                                  inv.status === 'PAID'
+                                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                                    : inv.status === 'PARTIALLY_PAID'
+                                    ? 'bg-amber-600 text-white'
+                                    : 'text-rose-600 border-rose-300'
+                                }`}
+                              >
+                                {inv.status.replace('_', ' ')}
+                              </Badge>
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              {inv.dueAmount > 0 && (
+                                <Button
+                                  size="sm"
+                                  className="h-6 text-[10px] px-2 bg-emerald-600 hover:bg-emerald-700"
+                                  onClick={() => handleOpenCollectPayment(inv)}
+                                >
+                                  Collect
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Student Payments History Table */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+                  Payment History & Receipts ({ledger?.payments?.length ?? 0})
+                </h4>
+                {!ledger?.payments || ledger.payments.length === 0 ? (
+                  <div className="text-center py-4 border border-dashed rounded-lg text-xs text-muted-foreground">
+                    No payment transactions recorded for this student yet.
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-muted/40 border-b text-muted-foreground">
+                        <tr>
+                          <th className="py-2 px-3">Receipt #</th>
+                          <th className="py-2 px-3">Date</th>
+                          <th className="py-2 px-3 text-right">Amount</th>
+                          <th className="py-2 px-3 text-center">Method</th>
+                          <th className="py-2 px-3">TrxID</th>
+                          <th className="py-2 px-3 text-right">Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {ledger.payments.map((pmt) => (
+                          <tr key={pmt.id} className="hover:bg-muted/10">
+                            <td className="py-2 px-3 font-mono font-medium">{pmt.receiptNumber}</td>
+                            <td className="py-2 px-3 text-muted-foreground">
+                              {new Date(pmt.paymentDate).toLocaleDateString()}
+                            </td>
+                            <td className="py-2 px-3 text-right font-bold text-emerald-600">
+                              ৳{pmt.amount.toLocaleString()}
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0">
+                                {pmt.method}
+                              </Badge>
+                            </td>
+                            <td className="py-2 px-3 font-mono text-[11px] text-muted-foreground">
+                              {pmt.transactionId || '—'}
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 text-[10px] px-2 gap-1"
+                                onClick={() => setActiveReceiptPayment(pmt)}
+                              >
+                                <Receipt className="h-3 w-3" /> View
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -771,6 +1029,121 @@ export default function StudentDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Collect Payment */}
+      <Dialog open={isCollectPaymentOpen} onOpenChange={setIsCollectPaymentOpen}>
+        <DialogContent className="max-w-md">
+          <form onSubmit={handleCollectPaymentSubmit}>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ArrowDownLeft className="h-5 w-5 text-emerald-600" />
+                Collect Payment
+              </DialogTitle>
+              <DialogDescription>
+                Record a payment for invoice {selectedInvoiceForPayment?.invoiceNumber}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4 text-xs">
+              {selectedInvoiceForPayment && (
+                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                  <div className="font-semibold text-foreground">
+                    {selectedInvoiceForPayment.title}
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t mt-2">
+                    <span className="text-muted-foreground">Remaining Due:</span>
+                    <span className="text-base font-bold text-amber-600">
+                      ৳{selectedInvoiceForPayment.dueAmount.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="stdPmtAmount">Payment Amount (৳) *</Label>
+                <Input
+                  id="stdPmtAmount"
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="stdPmtMethod">Payment Method *</Label>
+                <select
+                  id="stdPmtMethod"
+                  value={paymentForm.method}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs ring-offset-background"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="BKASH">bKash</option>
+                  <option value="NAGAD">Nagad</option>
+                  <option value="CARD">Debit / Credit Card</option>
+                  <option value="BANK_TRANSFER">Bank Transfer</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              {paymentForm.method !== 'CASH' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="stdTrxId">Transaction ID / TrxID</Label>
+                  <Input
+                    id="stdTrxId"
+                    placeholder="e.g. 9J28DA10B or deposit slip #"
+                    value={paymentForm.transactionId}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, transactionId: e.target.value })}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="stdPmtDate">Payment Date</Label>
+                <Input
+                  id="stdPmtDate"
+                  type="date"
+                  value={paymentForm.paymentDate}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="stdPmtNotes">Remarks / Receipt Note</Label>
+                <Input
+                  id="stdPmtNotes"
+                  placeholder="Optional collection note..."
+                  value={paymentForm.notes}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsCollectPaymentOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={recordPaymentMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                {recordPaymentMutation.isPending ? 'Processing...' : 'Confirm Payment'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Digital Receipt Modal */}
+      <PaymentReceiptModal
+        isOpen={Boolean(activeReceiptPayment)}
+        onClose={() => setActiveReceiptPayment(null)}
+        payment={activeReceiptPayment}
+      />
     </div>
   );
 }

@@ -93,5 +93,32 @@
     "selectBatchPrompt": "Please select a batch above to load the roll-call sheet.",
     "statsOverview": "Batch Overview",
     "saveSuccess": "Attendance recorded successfully"
+  },
+  "fees": {
+    "title": "Fees & Financials",
+    "subtitle": "Manage course billing, fee invoices, automated receipts, and student payment collections.",
+    "newInvoice": "New Invoice",
+    "collectPayment": "Collect Payment",
+    "totalInvoiced": "Total Invoiced",
+    "totalCollected": "Total Collected",
+    "outstandingDues": "Outstanding Dues",
+    "overdueInvoices": "Overdue Invoices",
+    "invoicesTab": "Invoices & Billing",
+    "paymentsTab": "Payment Transactions",
+    "invoiceNumber": "Invoice #",
+    "receiptNumber": "Receipt #",
+    "student": "Student",
+    "purpose": "Title / Purpose",
+    "amount": "Total",
+    "paid": "Paid",
+    "due": "Due",
+    "status": "Status",
+    "dueDate": "Due Date",
+    "paymentDate": "Payment Date",
+    "method": "Method",
+    "actions": "Actions",
+    "receipt": "Receipt",
+    "viewReceipt": "View Receipt",
+    "printReceipt": "Print Receipt"
   }
 }
