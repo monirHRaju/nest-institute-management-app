@@ -4,13 +4,19 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import type { Role } from '@repo/shared';
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: Role;
   tenantId: string | null;
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+    plan: string;
+  } | null;
 }
 
 export function useAuth() {

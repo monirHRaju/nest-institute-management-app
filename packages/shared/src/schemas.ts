@@ -39,9 +39,45 @@ export const UpdateTenantSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   status: z.enum(['ACTIVE', 'SUSPENDED', 'TRIAL']).optional(),
   plan: z.enum(['FREE', 'BASIC', 'PRO']).optional(),
+  themeConfig: z.record(z.unknown()).optional(),
 });
 
 export type UpdateTenantDto = z.infer<typeof UpdateTenantSchema>;
+
+export const UpdateTenantSettingsSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  themeConfig: z
+    .object({
+      primaryColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color').optional(),
+      accentColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color').optional(),
+      logoUrl: z.string().url().or(z.literal('')).optional(),
+      bannerUrl: z.string().url().or(z.literal('')).optional(),
+      aboutText: z.string().max(1000).optional(),
+      contactPhone: z.string().max(30).optional(),
+      contactEmail: z.string().email().or(z.literal('')).optional(),
+      address: z.string().max(250).optional(),
+      currencySymbol: z.string().max(10).optional(),
+      website: z.string().url().or(z.literal('')).optional(),
+    })
+    .optional(),
+});
+
+export type UpdateTenantSettingsDto = z.infer<typeof UpdateTenantSettingsSchema>;
+
+export const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters long'),
+});
+
+export type ChangePasswordDto = z.infer<typeof ChangePasswordSchema>;
+
+export const UpdateProfileSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(50),
+  lastName: z.string().min(1, 'Last name is required').max(50),
+  phone: z.string().max(30).optional().nullable(),
+});
+
+export type UpdateProfileDto = z.infer<typeof UpdateProfileSchema>;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 

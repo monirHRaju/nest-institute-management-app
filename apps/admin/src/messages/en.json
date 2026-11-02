@@ -143,5 +143,20 @@
     "admissionsTab": "Admissions & Trends",
     "exportCsv": "Export CSV",
     "printPdf": "Print / PDF"
+  },
+  "settings": {
+    "title": "Institute Settings",
+    "subtitle": "Configure your institute identity, public theme branding, currency, and account security.",
+    "profileTab": "Institute Profile",
+    "brandingTab": "Branding & Appearance",
+    "preferencesTab": "Preferences",
+    "securityTab": "Account & Security"
+  },
+  "tenants": {
+    "title": "Institutes & Tenants Hub",
+    "subtitle": "Multi-tenant governance, institute provisioning, subscription plan assignments, and status controls.",
+    "onboardInstitute": "Onboard Institute",
+    "allStatuses": "All Statuses",
+    "allPlans": "All Plans"
   }
 }

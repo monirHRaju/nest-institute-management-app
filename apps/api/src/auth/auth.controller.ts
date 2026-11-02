@@ -4,10 +4,12 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
   UnauthorizedException,
+  UsePipes,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,8 +19,13 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { LoginSchema } from '@repo/shared';
-import { AuthService } from './auth.service';
+import {
+  LoginSchema,
+  ChangePasswordSchema,
+  UpdateProfileSchema,
+} from '@repo/shared';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { AuthService, UserProfileResponse } from './auth.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/types/request.types';
@@ -160,8 +167,37 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async me(@CurrentUser() user: AuthUser) {
+  async me(@CurrentUser() user: AuthUser): Promise<{ success: boolean; data: UserProfileResponse }> {
     const profile = await this.authService.getProfile(user.userId);
     return { success: true, data: profile };
+  }
+
+  /**
+   * PATCH /api/v1/auth/password
+   * Allows current user to change their account password.
+   */
+  @Patch('password')
+  @ApiBearerAuth()
+  @UsePipes(new ZodValidationPipe(ChangePasswordSchema))
+  @ApiOperation({ summary: 'Change current user password' })
+  @ApiResponse({ status: 200, description: 'Password updated successfully' })
+  @ApiResponse({ status: 400, description: 'Current password does not match' })
+  async changePassword(@CurrentUser() user: AuthUser, @Body() body: unknown) {
+    const dto = ChangePasswordSchema.parse(body);
+    return this.authService.changePassword(user.userId, dto);
+  }
+
+  /**
+   * PATCH /api/v1/auth/profile
+   * Allows current user to update their name and contact number.
+   */
+  @Patch('profile')
+  @ApiBearerAuth()
+  @UsePipes(new ZodValidationPipe(UpdateProfileSchema))
+  @ApiOperation({ summary: 'Update personal profile name and phone' })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully' })
+  async updateProfile(@CurrentUser() user: AuthUser, @Body() body: unknown) {
+    const dto = UpdateProfileSchema.parse(body);
+    return this.authService.updateProfile(user.userId, dto);
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -22,23 +23,51 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
   CreateTenantSchema,
   UpdateTenantSchema,
+  UpdateTenantSettingsSchema,
   PaginationSchema,
   Role,
 } from '@repo/shared';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthUser } from '../common/types/request.types';
 import { TenantsService } from './tenants.service';
 import { TenantStatus } from '@repo/db';
 
-/**
- * Tenant CRUD — Super Admin only.
- * RolesGuard will be activated in Segment 1.3.
- * For now: @Roles(Role.SUPER_ADMIN) is declared but not yet enforced.
- */
-@ApiTags('Tenants (Super Admin)')
+@ApiTags('Tenants')
 @ApiBearerAuth()
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
+
+  // ── TENANT ADMIN / STAFF ENDPOINTS ──────────────────────────────────────────
+
+  // GET /api/v1/tenants/settings
+  @Get('settings')
+  @Roles(Role.TENANT_ADMIN, Role.STAFF)
+  @ApiOperation({ summary: 'Get settings for current tenant institute' })
+  @ApiResponse({ status: 200, description: 'Settings retrieved successfully' })
+  getSettings(@CurrentUser() user: AuthUser) {
+    if (!user.tenantId) {
+      throw new BadRequestException('User is not associated with an institute tenant');
+    }
+    return this.tenantsService.getSettings(user.tenantId);
+  }
+
+  // PATCH /api/v1/tenants/settings
+  @Patch('settings')
+  @Roles(Role.TENANT_ADMIN)
+  @UsePipes(new ZodValidationPipe(UpdateTenantSettingsSchema))
+  @ApiOperation({ summary: 'Update profile and branding settings for current tenant' })
+  @ApiResponse({ status: 200, description: 'Settings updated successfully' })
+  updateSettings(@CurrentUser() user: AuthUser, @Body() body: unknown) {
+    if (!user.tenantId) {
+      throw new BadRequestException('User is not associated with an institute tenant');
+    }
+    const dto = UpdateTenantSettingsSchema.parse(body);
+    return this.tenantsService.updateSettings(user.tenantId, dto);
+  }
+
+  // ── SUPER ADMIN ONLY ENDPOINTS ──────────────────────────────────────────────
 
   // POST /api/v1/tenants
   @Post()
@@ -56,17 +85,19 @@ export class TenantsController {
   // GET /api/v1/tenants
   @Get()
   @Roles(Role.SUPER_ADMIN)
-  @ApiOperation({ summary: 'List all tenants (paginated)' })
+  @ApiOperation({ summary: 'List all tenants for Super Admin (paginated + search)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: TenantStatus })
+  @ApiQuery({ name: 'search', required: false, type: String })
   findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: TenantStatus,
+    @Query('search') search?: string,
   ) {
     const pagination = PaginationSchema.parse({ page, limit });
-    return this.tenantsService.findAll(pagination, { status });
+    return this.tenantsService.findAll(pagination, { status, search });
   }
 
   // GET /api/v1/tenants/:id

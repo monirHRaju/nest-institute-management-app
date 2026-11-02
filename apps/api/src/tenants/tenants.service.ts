@@ -11,7 +11,10 @@ import type {
   PaginatedResponse,
   CreateTenantDto,
   UpdateTenantDto,
+  UpdateTenantSettingsDto,
   PaginationDto,
+  TenantSettingsResponse,
+  SuperAdminTenantRecord,
 } from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -29,8 +32,6 @@ export class TenantsService {
       throw new ConflictException(`Slug "${dto.slug}" is already taken`);
     }
 
-    // Check owner email uniqueness within this (future) tenant
-    // We'll validate after tenant creation via a transaction
     const passwordHash = await bcrypt.hash(dto.ownerPassword, 12);
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -43,6 +44,8 @@ export class TenantsService {
           themeConfig: {
             primaryColor: '#2563eb',
             accentColor: '#f59e0b',
+            currencySymbol: '৳',
+            aboutText: 'Empowering students with modern professional skills and career training.',
           },
         },
       });
@@ -77,18 +80,26 @@ export class TenantsService {
     };
   }
 
-  // ── List all tenants (paginated) ─────────────────────────────────────────────
+  // ── List all tenants for Super Admin (paginated + search) ─────────────────────
   async findAll(
     pagination: PaginationDto,
-    filters: { status?: TenantStatus; plan?: string },
-  ): Promise<PaginatedResponse<TenantListItem>> {
+    filters: { status?: TenantStatus; plan?: string; search?: string },
+  ): Promise<PaginatedResponse<SuperAdminTenantRecord>> {
     const { page, limit } = pagination;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: any = {
       ...(filters.status && { status: filters.status }),
       ...(filters.plan && { plan: filters.plan as never }),
     };
+
+    if (filters.search && filters.search.trim()) {
+      const term = filters.search.trim();
+      where.OR = [
+        { name: { contains: term, mode: 'insensitive' } },
+        { slug: { contains: term, mode: 'insensitive' } },
+      ];
+    }
 
     const [tenants, total] = await Promise.all([
       this.prisma.tenant.findMany({
@@ -97,7 +108,25 @@ export class TenantsService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          _count: { select: { users: true } },
+          _count: {
+            select: {
+              users: true,
+              students: true,
+              courses: true,
+              batches: true,
+            },
+          },
+          users: {
+            where: { role: Role.TENANT_ADMIN },
+            take: 1,
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+            },
+          },
         },
       }),
       this.prisma.tenant.count({ where }),
@@ -109,10 +138,18 @@ export class TenantsService {
         id: t.id,
         name: t.name,
         slug: t.slug,
-        status: t.status,
-        plan: t.plan,
-        userCount: t._count.users,
+        status: t.status as any,
+        plan: t.plan as any,
+        themeConfig: t.themeConfig as any,
+        owner: t.users[0] || null,
+        _count: {
+          users: t._count.users,
+          students: t._count.students,
+          courses: t._count.courses,
+          batches: t._count.batches,
+        },
         createdAt: t.createdAt.toISOString(),
+        updatedAt: t.updatedAt.toISOString(),
       })),
       meta: {
         total,
@@ -124,11 +161,29 @@ export class TenantsService {
   }
 
   // ── Get single tenant ────────────────────────────────────────────────────────
-  async findOne(id: string): Promise<ApiResponse<TenantDetail>> {
+  async findOne(id: string): Promise<ApiResponse<SuperAdminTenantRecord>> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id },
       include: {
-        _count: { select: { users: true } },
+        _count: {
+          select: {
+            users: true,
+            students: true,
+            courses: true,
+            batches: true,
+          },
+        },
+        users: {
+          where: { role: Role.TENANT_ADMIN },
+          take: 1,
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
       },
     });
 
@@ -142,29 +197,72 @@ export class TenantsService {
         id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
-        status: tenant.status,
-        plan: tenant.plan,
-        themeConfig: tenant.themeConfig as Record<string, unknown>,
-        userCount: tenant._count.users,
+        status: tenant.status as any,
+        plan: tenant.plan as any,
+        themeConfig: tenant.themeConfig as any,
+        owner: tenant.users[0] || null,
+        _count: {
+          users: tenant._count.users,
+          students: tenant._count.students,
+          courses: tenant._count.courses,
+          batches: tenant._count.batches,
+        },
         createdAt: tenant.createdAt.toISOString(),
         updatedAt: tenant.updatedAt.toISOString(),
       },
     };
   }
 
-  // ── Update tenant ────────────────────────────────────────────────────────────
-  async update(id: string, dto: UpdateTenantDto): Promise<ApiResponse<TenantDetail>> {
-    const tenant = await this.prisma.tenant.findUnique({ where: { id } });
-    if (!tenant) throw new NotFoundException(`Tenant "${id}" not found`);
+  // ── Get settings for the current tenant ───────────────────────────────────────
+  async getSettings(tenantId: string): Promise<ApiResponse<TenantSettingsResponse>> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(`Tenant not found`);
+    }
+
+    return {
+      success: true,
+      data: {
+        id: tenant.id,
+        name: tenant.name,
+        slug: tenant.slug,
+        status: tenant.status as any,
+        plan: tenant.plan as any,
+        themeConfig: (tenant.themeConfig as any) || {
+          primaryColor: '#2563eb',
+          accentColor: '#f59e0b',
+        },
+        createdAt: tenant.createdAt.toISOString(),
+        updatedAt: tenant.updatedAt.toISOString(),
+      },
+    };
+  }
+
+  // ── Update settings for current tenant (TENANT_ADMIN) ─────────────────────────
+  async updateSettings(
+    tenantId: string,
+    dto: UpdateTenantSettingsDto,
+  ): Promise<ApiResponse<TenantSettingsResponse>> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(`Tenant not found`);
+    }
+
+    const currentTheme = (tenant.themeConfig as Record<string, unknown>) || {};
+    const mergedTheme = dto.themeConfig ? { ...currentTheme, ...dto.themeConfig } : currentTheme;
 
     const updated = await this.prisma.tenant.update({
-      where: { id },
+      where: { id: tenantId },
       data: {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.status && { status: dto.status }),
-        ...(dto.plan && { plan: dto.plan }),
+        ...(dto.name ? { name: dto.name.trim() } : {}),
+        ...(dto.themeConfig ? { themeConfig: mergedTheme as any } : {}),
       },
-      include: { _count: { select: { users: true } } },
     });
 
     return {
@@ -173,10 +271,43 @@ export class TenantsService {
         id: updated.id,
         name: updated.name,
         slug: updated.slug,
-        status: updated.status,
-        plan: updated.plan,
-        themeConfig: updated.themeConfig as Record<string, unknown>,
-        userCount: updated._count.users,
+        status: updated.status as any,
+        plan: updated.plan as any,
+        themeConfig: updated.themeConfig as any,
+        createdAt: updated.createdAt.toISOString(),
+        updatedAt: updated.updatedAt.toISOString(),
+      },
+      message: 'Institute settings updated successfully',
+    };
+  }
+
+  // ── Update tenant by Super Admin ─────────────────────────────────────────────
+  async update(id: string, dto: UpdateTenantDto): Promise<ApiResponse<TenantSettingsResponse>> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) throw new NotFoundException(`Tenant "${id}" not found`);
+
+    const currentTheme = (tenant.themeConfig as Record<string, unknown>) || {};
+    const mergedTheme = dto.themeConfig ? { ...currentTheme, ...dto.themeConfig } : currentTheme;
+
+    const updated = await this.prisma.tenant.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: dto.name.trim() }),
+        ...(dto.status && { status: dto.status }),
+        ...(dto.plan && { plan: dto.plan }),
+        ...(dto.themeConfig && { themeConfig: mergedTheme as any }),
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        id: updated.id,
+        name: updated.name,
+        slug: updated.slug,
+        status: updated.status as any,
+        plan: updated.plan as any,
+        themeConfig: updated.themeConfig as any,
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       },
@@ -200,21 +331,4 @@ export class TenantsService {
       message: `Tenant "${tenant.name}" suspended successfully`,
     };
   }
-}
-
-// ── Exported response types ───────────────────────────────────────────────────
-
-export interface TenantListItem {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  plan: string;
-  userCount: number;
-  createdAt: string;
-}
-
-export interface TenantDetail extends TenantListItem {
-  themeConfig: Record<string, unknown>;
-  updatedAt: string;
 }

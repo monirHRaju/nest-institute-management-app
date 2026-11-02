@@ -92,8 +92,11 @@ export function AppSidebar() {
           <span>EduManage</span>
         </div>
         {user && !isSuperAdmin && (
-          <div className="text-xs text-muted-foreground mt-1">
-            {user.role} • {user.email}
+          <div className="text-xs text-muted-foreground mt-1 truncate">
+            {user.tenant?.name ? (
+              <span className="font-semibold text-foreground block truncate">{user.tenant.name}</span>
+            ) : null}
+            <span className="capitalize">{user.role?.toLowerCase().replace('_', ' ')} • {user.email}</span>
           </div>
         )}
       </SidebarHeader>

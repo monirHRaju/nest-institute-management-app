@@ -123,6 +123,43 @@ export interface TenantThemeConfig {
   contactPhone?: string;
   contactEmail?: string;
   address?: string;
+  currencySymbol?: string; // e.g. "৳", "$", "₹" (default "৳")
+  website?: string;
+}
+
+export interface TenantSettingsResponse {
+  id: string;
+  name: string;
+  slug: string;
+  status: TenantStatus;
+  plan: TenantPlan;
+  themeConfig: TenantThemeConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SuperAdminTenantRecord {
+  id: string;
+  name: string;
+  slug: string;
+  status: TenantStatus;
+  plan: TenantPlan;
+  themeConfig: TenantThemeConfig;
+  createdAt: string;
+  updatedAt: string;
+  owner?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone?: string | null;
+  } | null;
+  _count: {
+    users: number;
+    students: number;
+    courses: number;
+    batches: number;
+  };
 }
 
 // ─── Batch Types ──────────────────────────────────────────────────────────────

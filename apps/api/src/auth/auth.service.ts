@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -8,7 +9,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { nanoid } from 'nanoid';
 import { Role } from '@repo/shared';
-import type { JwtPayload } from '@repo/shared';
+import type {
+  JwtPayload,
+  ChangePasswordDto,
+  UpdateProfileDto,
+} from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -28,6 +33,25 @@ export interface LoginResult {
   user: Omit<ValidatedUser, never>;
 }
 
+export interface UserProfileResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  tenantId: string | null;
+  phone: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  tenant: {
+    id: string;
+    name: string;
+    slug: string;
+    plan: string;
+    themeConfig: unknown;
+  } | null;
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -44,10 +68,6 @@ export class AuthService {
     password: string,
     providedTenantId: string | null,
   ): Promise<ValidatedUser | null> {
-    // If a tenant context is provided (e.g., subdomain), strict match it.
-    // If NOT provided (root admin domain login), find by email globally.
-    // We prioritize SUPER_ADMIN (tenantId: null) if multiple exist.
-    
     const users = await this.prisma.user.findMany({
       where: providedTenantId ? { email, tenantId: providedTenantId } : { email },
       select: {
@@ -64,7 +84,6 @@ export class AuthService {
 
     if (users.length === 0) return null;
 
-    // Pick exact match if provided, otherwise prioritize SUPER_ADMIN, otherwise pick the first.
     let user = users.find((u) => u.tenantId === providedTenantId);
     if (!user) user = users.find((u) => u.tenantId === null);
     if (!user) user = users[0];
@@ -165,7 +184,7 @@ export class AuthService {
   }
 
   // ── 5. Get current user profile ──────────────────────────────────────────────
-  async getProfile(userId: string) {
+  async getProfile(userId: string): Promise<UserProfileResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -179,13 +198,57 @@ export class AuthService {
         isActive: true,
         createdAt: true,
         tenant: {
-          select: { id: true, name: true, slug: true, plan: true },
+          select: { id: true, name: true, slug: true, plan: true, themeConfig: true },
         },
       },
     });
 
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return user as unknown as UserProfileResponse;
+  }
+
+  // ── 6. Change Password ───────────────────────────────────────────────────────
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const isMatch = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new BadRequestException('Current password does not match');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    return { success: true, message: 'Password updated successfully' };
+  }
+
+  // ── 7. Update User Profile ───────────────────────────────────────────────────
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
+        ...(dto.phone !== undefined ? { phone: dto.phone?.trim() || null } : {}),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        tenantId: true,
+      },
+    });
+
+    return { success: true, data: updated, message: 'Profile updated successfully' };
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
