@@ -25,6 +25,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { FeesModule } from './fees/fees.module';
 import { InstructorsModule } from './instructors/instructors.module';
 import { ReportsModule } from './reports/reports.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ReportsModule } from './reports/reports.module';
     FeesModule,
     InstructorsModule,
     ReportsModule,
+    ApplicationsModule,
   ],
   controllers: [AppController],
   providers: [

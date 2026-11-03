@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { getTenantConfig } from '@/lib/api';
+import { getTenantConfig } from '@/lib/server-api';
+import { PublicHeader } from '@/components/public-header';
+import { PublicFooter } from '@/components/public-footer';
 import '@/styles/globals.css';
 
 const geistSans = Geist({
@@ -18,11 +20,14 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getTenantConfig();
   if (!config) {
-    return { title: 'Institute Not Found' };
+    return {
+      title: 'Institute Portal | EduManage',
+      description: 'Public education portal and admissions',
+    };
   }
   return {
-    title: `${config.name} | EduManage Portal`,
-    description: config.themeConfig.aboutText || 'Welcome to our institute portal',
+    title: `${config.name} | Official Institute Portal`,
+    description: config.themeConfig.aboutText || `Welcome to ${config.name} public portal. Explore courses, apply online, and verify credentials.`,
   };
 }
 
@@ -34,46 +39,36 @@ export default async function RootLayout({
   const messages = await getMessages();
   const config = await getTenantConfig();
 
-  // If no tenant config, we'll still render the shell but the page can handle the 404 state
-  const primaryColor = config?.themeConfig.primaryColor || '#2563eb';
-  const accentColor = config?.themeConfig.accentColor || '#f59e0b';
+  const primaryColor = config?.themeConfig?.primaryColor || '#2563eb';
+  const accentColor = config?.themeConfig?.accentColor || '#f59e0b';
+  const tenantName = config?.name || 'EduManage Institute';
+  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3000';
 
   return (
     <html lang="en">
       <head>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            :root {
-              --tenant-primary: ${primaryColor};
-              --tenant-accent: ${accentColor};
-            }
-          `
-        }} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              :root {
+                --tenant-primary: ${primaryColor};
+                --tenant-accent: ${accentColor};
+              }
+            `,
+          }}
+        />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen flex flex-col bg-slate-50/50 text-slate-900`}>
         <NextIntlClientProvider messages={messages}>
-          <header className="bg-[var(--tenant-primary)] text-white p-4 shadow-md">
-            <div className="container mx-auto font-bold text-xl flex justify-between items-center">
-              <span>{config ? config.name : 'EduManage'}</span>
-              <nav className="text-sm font-medium space-x-4 hidden md:block">
-                <a href="#" className="hover:underline">Home</a>
-                <a href="#" className="hover:underline">Courses</a>
-                <a href="#" className="hover:underline">Contact</a>
-                <a href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3000'} className="hover:underline opacity-80">Portal Login</a>
-              </nav>
-            </div>
-          </header>
-          
-          <main className="flex-1">
+          <PublicHeader
+            tenantName={tenantName}
+            logoUrl={config?.themeConfig?.logoUrl}
+            adminUrl={adminUrl}
+          />
+          <main className="flex-1 flex flex-col">
             {children}
           </main>
-          
-          <footer className="bg-gray-900 text-gray-300 py-8 text-center text-sm">
-            <div className="container mx-auto">
-              <p>&copy; {new Date().getFullYear()} {config?.name || 'EduManage'}. All rights reserved.</p>
-              <p className="mt-2 text-xs opacity-50">Powered by EduManage SaaS</p>
-            </div>
-          </footer>
+          <PublicFooter config={config} />
         </NextIntlClientProvider>
       </body>
     </html>

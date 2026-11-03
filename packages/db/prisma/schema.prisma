@@ -85,6 +85,12 @@ enum PaymentMethod {
   OTHER
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT
 // The top-level entity. Every institute/coaching center is a Tenant.
@@ -115,6 +121,7 @@ model Tenant {
   attendance  Attendance[]
   feeInvoices FeeInvoice[]
   payments    Payment[]
+  admissionApplications AdmissionApplication[]
 
   @@index([slug])
   @@map("tenants")
@@ -238,6 +245,7 @@ model Course {
   batches     Batch[]
   enrollments Enrollment[]
   feeInvoices FeeInvoice[]
+  admissionApplications AdmissionApplication[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -273,6 +281,7 @@ model Batch {
 
   enrollments Enrollment[]
   attendance  Attendance[]
+  admissionApplications AdmissionApplication[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -317,6 +326,7 @@ model Student {
   attendance       Attendance[]
   feeInvoices      FeeInvoice[]
   payments         Payment[]
+  admissionApplications AdmissionApplication[]
 
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -476,4 +486,50 @@ model Payment {
   @@index([studentId])
   @@index([paymentDate])
   @@map("payments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMISSION APPLICATION
+// Online prospective student applications submitted via the public portal.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AdmissionApplication {
+  id                String            @id @default(cuid())
+  applicationNumber String            // e.g. "APP-2026-0001"
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String
+  gender            String?           // "MALE", "FEMALE", "OTHER"
+  dateOfBirth       DateTime?
+  address           String?
+  guardianName      String?
+  guardianPhone     String?
+  guardianRelation  String?
+  notes             String?           // Applicant notes / comments
+  adminNotes        String?           // Internal counselor review notes
+  status            ApplicationStatus @default(PENDING)
+
+  courseId          String
+  course            Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  batchId           String?
+  batch             Batch?            @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  tenantId          String
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  studentId         String?
+  student           Student?          @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([applicationNumber, tenantId])
+  @@index([tenantId])
+  @@index([courseId])
+  @@index([batchId])
+  @@index([status])
+  @@index([phone])
+  @@map("admission_applications")
 }

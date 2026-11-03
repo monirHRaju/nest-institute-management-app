@@ -4,13 +4,26 @@
     "courses": "Courses",
     "about": "About Us",
     "contact": "Contact",
-    "admission": "Apply Now"
+    "admission": "Apply Now",
+    "track": "Track Application",
+    "verify": "Verify Credential",
+    "portalLogin": "Portal Login"
   },
   "hero": {
     "tagline": "Empowering Your Future",
-    "cta": "View Courses"
+    "cta": "View Courses",
+    "applyCta": "Apply for Admission"
+  },
+  "courses": {
+    "title": "Available Programs",
+    "subtitle": "Industry-accredited courses designed for career success",
+    "duration": "Duration",
+    "tuition": "Tuition Fee",
+    "apply": "Apply Now",
+    "viewDetails": "View Details"
   },
   "footer": {
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "poweredBy": "Powered by EduManage SaaS"
   }
 }

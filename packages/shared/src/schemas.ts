@@ -365,3 +365,40 @@ export const ReportFilterSchema = z.object({
 });
 
 export type ReportFilterDto = z.infer<typeof ReportFilterSchema>;
+
+// ─── Public Admission Applications ────────────────────────────────────────────
+
+export const CreatePublicApplicationSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(50),
+  lastName: z.string().min(1, 'Last name is required').max(50),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  phone: z.string().min(6, 'Valid phone number is required').max(25),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+  dateOfBirth: z.string().optional().or(z.literal('')),
+  address: z.string().max(250).optional().or(z.literal('')),
+  guardianName: z.string().max(100).optional().or(z.literal('')),
+  guardianPhone: z.string().max(25).optional().or(z.literal('')),
+  guardianRelation: z.string().max(50).optional().or(z.literal('')),
+  courseId: z.string().min(1, 'Please select a course'),
+  batchId: z.string().optional().or(z.literal('')),
+  notes: z.string().max(500).optional().or(z.literal('')),
+});
+
+export type CreatePublicApplicationDto = z.infer<typeof CreatePublicApplicationSchema>;
+
+export const UpdateApplicationStatusSchema = z.object({
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+  adminNotes: z.string().max(1000).optional(),
+});
+
+export type UpdateApplicationStatusDto = z.infer<typeof UpdateApplicationStatusSchema>;
+
+export const ApproveAndAdmitSchema = z.object({
+  batchId: z.string().optional(),
+  customStudentId: z.string().optional(),
+  createInvoice: z.boolean().default(true),
+  invoiceAmount: z.number().min(0).optional(),
+  adminNotes: z.string().optional(),
+});
+
+export type ApproveAndAdmitDto = z.infer<typeof ApproveAndAdmitSchema>;

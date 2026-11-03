@@ -12,6 +12,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "applications": "Applications",
     "tenants": "Tenants",
     "students": "Students",
     "instructors": "Instructors",
@@ -27,6 +28,23 @@
     "myFees": "My Fees",
     "profile": "Profile",
     "logout": "Log out"
+  },
+  "applications": {
+    "title": "Online Applications",
+    "subtitle": "Review prospective student applications and convert them directly into admitted students.",
+    "searchPlaceholder": "Search by applicant name, tracking ID, or phone...",
+    "allStatuses": "All Statuses",
+    "trackingId": "Tracking ID",
+    "applicant": "Applicant",
+    "course": "Program & Batch",
+    "submitted": "Submitted",
+    "status": "Status",
+    "actions": "Actions",
+    "review": "Review Application",
+    "approveAndAdmit": "Approve & Admit Student",
+    "reject": "Reject",
+    "counselorNotes": "Review Notes",
+    "createInvoice": "Generate Admission Fee Invoice immediately"
   },
   "students": {
     "title": "Students",

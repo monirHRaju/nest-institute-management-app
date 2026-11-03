@@ -73,6 +73,12 @@ export enum PaymentMethod {
   OTHER = 'OTHER',
 }
 
+export enum ApplicationStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 export const DAYS_OF_WEEK = [
   'SATURDAY',
   'SUNDAY',
@@ -134,6 +140,7 @@ export interface TenantSettingsResponse {
   status: TenantStatus;
   plan: TenantPlan;
   themeConfig: TenantThemeConfig;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -145,6 +152,7 @@ export interface SuperAdminTenantRecord {
   status: TenantStatus;
   plan: TenantPlan;
   themeConfig: TenantThemeConfig;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   owner?: {
@@ -203,6 +211,7 @@ export interface AttendanceRecord {
   batchId: string;
   studentId: string;
   markedById?: string | null;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   student?: {
@@ -289,6 +298,7 @@ export interface FeeInvoiceRecord {
   studentId: string;
   courseId?: string | null;
   tenantId: string;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   student?: {
@@ -319,6 +329,7 @@ export interface PaymentRecord {
   studentId: string;
   receivedById?: string | null;
   tenantId: string;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   invoice?: {
@@ -376,6 +387,7 @@ export interface InstructorProfileRecord {
   qualification?: string | null;
   joiningDate?: string | null;
   bio?: string | null;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   instructorBatches?: Array<{
@@ -472,4 +484,96 @@ export interface AdmissionsReportSummary {
     count: number;
     percentage: number;
   }>;
+}
+
+// ─── Public Portal & Admissions Types ─────────────────────────────────────────
+
+export interface PublicCourseBatchItem {
+  id: string;
+  name: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  schedule?: string | null;
+  classDays?: string[];
+  classTime?: string | null;
+  capacity?: number | null;
+  enrolledCount?: number;
+  instructor?: {
+    name: string;
+    designation?: string | null;
+  } | null;
+}
+
+export interface PublicCourseRecord {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string | null;
+  duration?: string | null;
+  fees: number;
+  categoryId?: string | null;
+  category?: {
+    id: string;
+    name: string;
+    slug?: string;
+  } | null;
+  batchesCount: number;
+  activeBatches: PublicCourseBatchItem[];
+  batches?: PublicCourseBatchItem[];
+}
+
+export interface AdmissionApplicationRecord {
+  id: string;
+  applicationNumber: string;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone: string;
+  gender?: string | null;
+  dateOfBirth?: string | null;
+  address?: string | null;
+  guardianName?: string | null;
+  guardianPhone?: string | null;
+  guardianRelation?: string | null;
+  notes?: string | null;
+  adminNotes?: string | null;
+  status: ApplicationStatus;
+  courseId: string;
+  course?: {
+    id: string;
+    name: string;
+    fees: number;
+  };
+  batchId?: string | null;
+  batch?: {
+    id: string;
+    name: string;
+    schedule?: string | null;
+    classTime?: string | null;
+    classDays?: string[];
+  } | null;
+  studentId?: string | null;
+  student?: {
+    id: string;
+    studentId: string;
+  } | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentVerificationResult {
+  isVerified: boolean;
+  studentId: string;
+  fullName: string;
+  status: StudentStatus;
+  instituteName: string;
+  joinedDate: string;
+  courses: Array<{
+    courseName: string;
+    batchName?: string | null;
+    status: EnrollmentStatus;
+    enrollmentDate: string;
+  }>;
+  verificationDate: string;
 }

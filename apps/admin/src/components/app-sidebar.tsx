@@ -16,6 +16,7 @@ import {
   LogOut,
   LayoutDashboard,
   Tags,
+  Inbox,
 } from 'lucide-react';
 
 import {
@@ -56,6 +57,7 @@ export function AppSidebar() {
 
   let items = [
     { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+    { title: t('applications'), url: '/dashboard/applications', icon: Inbox },
     { title: t('students'), url: '/dashboard/students', icon: Users },
     { title: t('instructors'), url: '/dashboard/instructors', icon: GraduationCap },
     { title: 'Categories', url: '/dashboard/categories', icon: Tags },
