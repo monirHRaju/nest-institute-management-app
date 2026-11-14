@@ -25,6 +25,12 @@ export enum TenantPlan {
   PRO = 'PRO',
 }
 
+export enum AdmissionStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
 export interface JwtPayload {

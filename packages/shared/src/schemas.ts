@@ -101,3 +101,30 @@ export type CreateBatchDto = z.infer<typeof CreateBatchSchema>;
 export const UpdateBatchSchema = CreateBatchSchema.partial();
 export type UpdateBatchDto = z.infer<typeof UpdateBatchSchema>;
 
+// ─── Admission ────────────────────────────────────────────────────────────────
+
+export const CreateAdmissionSchema = z.object({
+  name: z.string().min(2, 'Full name is required').max(100),
+  phone: z
+    .string()
+    .regex(/^01\d{9}$/, 'Phone must be a valid 11-digit Bangladeshi number starting with 01'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  courseId: z.string().min(1, 'Please select a course'),
+  address: z.string().max(250).optional(),
+  guardianName: z.string().max(100).optional(),
+  guardianPhone: z.string().max(20).optional(),
+  message: z.string().max(500).optional(),
+});
+
+export type CreateAdmissionDto = z.infer<typeof CreateAdmissionSchema>;
+
+export const ApproveAdmissionSchema = z.object({
+  batchId: z.string().optional(),
+  guardianName: z.string().max(100).optional(),
+  guardianPhone: z.string().max(20).optional(),
+  password: z.string().min(6).optional(),
+});
+
+export type ApproveAdmissionDto = z.infer<typeof ApproveAdmissionSchema>;
+
+

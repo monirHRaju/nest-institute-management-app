@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -54,12 +55,20 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <header className="bg-[var(--tenant-primary)] text-white p-4 shadow-md">
             <div className="container mx-auto font-bold text-xl flex justify-between items-center">
-              <span>{config ? config.name : 'EduManage'}</span>
-              <nav className="text-sm font-medium space-x-4 hidden md:block">
-                <a href="#" className="hover:underline">Home</a>
-                <a href="#" className="hover:underline">Courses</a>
-                <a href="#" className="hover:underline">Contact</a>
-                <a href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3000'} className="hover:underline opacity-80">Portal Login</a>
+              <Link href="/" className="hover:opacity-90">
+                {config ? config.name : 'EduManage'}
+              </Link>
+              <nav className="text-sm font-medium flex items-center gap-6">
+                <Link href="/" className="hover:underline">Home</Link>
+                <Link href="/courses" className="hover:underline">Courses</Link>
+                <Link href="/admission" className="hover:underline">Admission</Link>
+                <Link href="/#contact" className="hover:underline hidden sm:inline">Contact</Link>
+                <a
+                  href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3000'}
+                  className="bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-md transition"
+                >
+                  Portal Login
+                </a>
               </nav>
             </div>
           </header>

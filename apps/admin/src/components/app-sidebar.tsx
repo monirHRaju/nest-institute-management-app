@@ -15,6 +15,7 @@ import {
   LogOut,
   LayoutDashboard,
   Tags,
+  UserPlus,
 } from 'lucide-react';
 
 import {
@@ -60,6 +61,7 @@ export function AppSidebar() {
       ]
     : [
         { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+        { title: t('admissions'), url: '/dashboard/admissions', icon: UserPlus },
         { title: t('students'), url: '/dashboard/students', icon: Users },
         { title: 'Categories', url: '/dashboard/categories', icon: Tags },
         { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },

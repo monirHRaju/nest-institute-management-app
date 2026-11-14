@@ -13,6 +13,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "tenants": "Tenants",
+    "admissions": "Admissions",
     "students": "Students",
     "courses": "Courses",
     "batches": "Batches",

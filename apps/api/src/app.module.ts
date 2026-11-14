@@ -20,6 +20,7 @@ import { PublicModule } from './public/public.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CoursesModule } from './courses/courses.module';
 import { BatchesModule } from './batches/batches.module';
+import { AdmissionsModule } from './admissions/admissions.module';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { BatchesModule } from './batches/batches.module';
     CategoriesModule,
     CoursesModule,
     BatchesModule,
-    // StudentsModule ← Phase 2
+    AdmissionsModule,
+    // StudentsModule ← Phase 2.3
     // FeesModule ← Phase 3
   ],
   controllers: [AppController],
