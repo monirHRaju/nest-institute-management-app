@@ -31,6 +31,13 @@ export enum AdmissionStatus {
   REJECTED = 'REJECTED',
 }
 
+export enum AttendanceStatus {
+  PRESENT = 'PRESENT',
+  ABSENT = 'ABSENT',
+  LATE = 'LATE',
+  EXCUSED = 'EXCUSED',
+}
+
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
 export interface JwtPayload {

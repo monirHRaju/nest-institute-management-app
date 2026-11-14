@@ -43,6 +43,13 @@ enum AdmissionStatus {
   REJECTED
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT
 // The top-level entity. Every institute/coaching center is a Tenant.
@@ -70,6 +77,7 @@ model Tenant {
   batches               Batch[]
   admissionApplications AdmissionApplication[]
   students              Student[]
+  attendanceRecords     AttendanceRecord[]
 
   @@index([slug])
   @@map("tenants")
@@ -102,6 +110,7 @@ model User {
   sessions          Session[]
   instructorBatches Batch[]
   studentProfile    Student?
+  markedAttendances AttendanceRecord[] @relation("MarkedAttendance")
 
   // Unique email per tenant (SUPER_ADMIN: email unique globally)
   @@unique([email, tenantId])
@@ -213,7 +222,8 @@ model Batch {
   tenantId    String
   tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  students    Student[]
+  students          Student[]
+  attendanceRecords AttendanceRecord[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -276,10 +286,45 @@ model Student {
   tenantId       String
   tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  attendanceRecords AttendanceRecord[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([tenantId])
   @@index([batchId])
   @@map("students")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ATTENDANCE RECORD
+// Per-student, per-batch attendance record for a given class date.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AttendanceRecord {
+  id         String           @id @default(cuid())
+  date       DateTime
+  status     AttendanceStatus @default(PRESENT)
+  remarks    String?
+
+  studentId  String
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  batchId    String
+  batch      Batch            @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  markedById String?
+  markedBy   User?            @relation("MarkedAttendance", fields: [markedById], references: [id], onDelete: SetNull)
+
+  tenantId   String
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([studentId, batchId, date])
+  @@index([tenantId])
+  @@index([batchId, date])
+  @@index([studentId])
+  @@map("attendance_records")
 }

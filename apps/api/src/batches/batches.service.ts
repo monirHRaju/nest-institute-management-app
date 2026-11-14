@@ -16,12 +16,17 @@ export class BatchesService {
   async findAll(tenantId: string, user: any) {
     let whereClause: any = { tenantId };
     // If instructor, only return their own batches
+    const instructorUserId = user?.userId ?? user?.id;
     if (user.role === Role.INSTRUCTOR) {
-      whereClause.instructorId = user.id;
+      whereClause.instructorId = instructorUserId;
     }
     return this.prisma.batch.findMany({
       where: whereClause,
-      include: { course: true, instructor: true },
+      include: {
+        course: true,
+        instructor: true,
+        _count: { select: { students: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -29,12 +34,17 @@ export class BatchesService {
   async findOne(tenantId: string, id: string, user: any) {
     const batch = await this.prisma.batch.findFirst({
       where: { id, tenantId },
-      include: { course: true, instructor: true },
+      include: {
+        course: true,
+        instructor: true,
+        _count: { select: { students: true } },
+      },
     });
     if (!batch) throw new NotFoundException('Batch not found');
     
     // Instructor restriction
-    if (user.role === Role.INSTRUCTOR && batch.instructorId !== user.id) {
+    const instructorUserId = user?.userId ?? user?.id;
+    if (user.role === Role.INSTRUCTOR && batch.instructorId !== instructorUserId) {
       throw new ForbiddenException('You do not have access to this batch');
     }
     return batch;

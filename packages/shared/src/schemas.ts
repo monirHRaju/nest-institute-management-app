@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Role } from './types';
+import { AttendanceStatus, Role } from './types';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
@@ -126,5 +126,55 @@ export const ApproveAdmissionSchema = z.object({
 });
 
 export type ApproveAdmissionDto = z.infer<typeof ApproveAdmissionSchema>;
+
+// ─── Student ──────────────────────────────────────────────────────────────────
+
+export const CreateStudentSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(50),
+  lastName: z.string().min(1, 'Last name is required').max(50),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  phone: z
+    .string()
+    .regex(/^01\d{9}$/, 'Phone must be a valid 11-digit BD number starting with 01'),
+  password: z.string().min(6).optional(),
+  batchId: z.string().optional(),
+  guardianName: z.string().max(100).optional(),
+  guardianPhone: z.string().max(20).optional(),
+  address: z.string().max(250).optional(),
+});
+
+export type CreateStudentDto = z.infer<typeof CreateStudentSchema>;
+
+export const UpdateStudentSchema = z.object({
+  firstName: z.string().min(1).max(50).optional(),
+  lastName: z.string().min(1).max(50).optional(),
+  phone: z.string().max(20).optional(),
+  isActive: z.boolean().optional(),
+  batchId: z.string().nullable().optional(),
+  guardianName: z.string().max(100).nullable().optional(),
+  guardianPhone: z.string().max(20).nullable().optional(),
+  address: z.string().max(250).nullable().optional(),
+});
+
+export type UpdateStudentDto = z.infer<typeof UpdateStudentSchema>;
+
+// ─── Attendance ───────────────────────────────────────────────────────────────
+
+export const AttendanceEntrySchema = z.object({
+  studentId: z.string().min(1),
+  status: z.nativeEnum(AttendanceStatus),
+  remarks: z.string().max(250).optional(),
+});
+
+export const MarkBatchAttendanceSchema = z.object({
+  batchId: z.string().min(1, 'Batch is required'),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  records: z.array(AttendanceEntrySchema).min(1, 'At least one attendance record is required'),
+});
+
+export type MarkBatchAttendanceDto = z.infer<typeof MarkBatchAttendanceSchema>;
+
 
 

@@ -51,26 +51,41 @@ export function AppSidebar() {
   };
 
   // Define nav items based on role
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const role = user?.role;
+  const isSuperAdmin = role === 'SUPER_ADMIN';
 
-  const items = isSuperAdmin
-    ? [
-        { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
-        { title: t('tenants'), url: '/dashboard/tenants', icon: Building2 },
-        { title: t('settings'), url: '/dashboard/settings', icon: Settings },
-      ]
-    : [
-        { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
-        { title: t('admissions'), url: '/dashboard/admissions', icon: UserPlus },
-        { title: t('students'), url: '/dashboard/students', icon: Users },
-        { title: 'Categories', url: '/dashboard/categories', icon: Tags },
-        { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },
-        { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
-        { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },
-        { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
-        { title: t('reports'), url: '/dashboard/reports', icon: BarChart },
-        { title: t('settings'), url: '/dashboard/settings', icon: Settings },
-      ];
+  const items =
+    role === 'SUPER_ADMIN'
+      ? [
+          { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+          { title: t('tenants'), url: '/dashboard/tenants', icon: Building2 },
+          { title: t('settings'), url: '/dashboard/settings', icon: Settings },
+        ]
+      : role === 'INSTRUCTOR'
+        ? [
+            { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+            { title: t('myBatches'), url: '/dashboard/batches', icon: Calendar },
+            { title: t('students'), url: '/dashboard/students', icon: Users },
+            { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+          ]
+        : role === 'STUDENT'
+          ? [
+              { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+              { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+              { title: t('myFees'), url: '/dashboard/fees', icon: CreditCard },
+            ]
+          : [
+              { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
+              { title: t('admissions'), url: '/dashboard/admissions', icon: UserPlus },
+              { title: t('students'), url: '/dashboard/students', icon: Users },
+              { title: 'Categories', url: '/dashboard/categories', icon: Tags },
+              { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },
+              { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
+              { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },
+              { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+              { title: t('reports'), url: '/dashboard/reports', icon: BarChart },
+              { title: t('settings'), url: '/dashboard/settings', icon: Settings },
+            ];
 
   if (isLoading) return <Sidebar />;
 
