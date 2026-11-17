@@ -37,7 +37,7 @@ export class StudentsController {
     @Query('batchId') batchId?: string,
     @Query('courseId') courseId?: string,
     @Query('status') status?: 'active' | 'inactive' | 'all',
-  ) {
+  ): Promise<any> {
     return this.studentsService.findAll(tenantId, user, {
       search,
       batchId,

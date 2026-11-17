@@ -21,7 +21,13 @@ export const TENANT_SCOPED_MODELS = [
   'AdmissionApplication',
   'Student',
   'AttendanceRecord',
-  // Phase 3+: 'FeeStructure', 'FeeInvoice', 'Payment', 'Expense'
+  'FeeStructure',
+  'Discount',
+  'StudentFeeAssignment',
+  'FeeInvoice',
+  'Payment',
+  'Expense',
+  'SmsReminderLog',
 ] as const;
 
 /**

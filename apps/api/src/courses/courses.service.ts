@@ -1,15 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto, UpdateCourseDto } from '@repo/shared';
-import { withTenant } from '@repo/db';
+import { Prisma, withTenant } from '@repo/db';
 
 @Injectable()
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
 
   async create(tenantId: string, createCourseDto: CreateCourseDto) {
-    return this.prisma.course.create({
-      data: withTenant(tenantId, createCourseDto),
+    return this.prisma.$transaction(async (tx) => {
+      const course = await tx.course.create({
+        data: withTenant(tenantId, createCourseDto),
+      });
+
+      // Automatically seed a Standard Fee Structure for the course
+      if (course.fees >= 0) {
+        await tx.feeStructure.create({
+          data: {
+            tenantId,
+            courseId: course.id,
+            name: 'Standard Fee',
+            totalAmount: new Prisma.Decimal(course.fees),
+            installmentCount: 1,
+            installmentPlan: [
+              {
+                sequence: 1,
+                percent: 100,
+                amount: Number(course.fees),
+                dueOffsetDays: 0,
+              },
+            ],
+            isActive: true,
+          },
+        });
+      }
+
+      return course;
     });
   }
 

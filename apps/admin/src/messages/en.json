@@ -27,5 +27,15 @@
     "myFees": "My Fees",
     "profile": "Profile",
     "logout": "Log out"
+  },
+  "fees": {
+    "title": "Fees & Accounting",
+    "structures": "Fee Structures",
+    "discounts": "Discounts & Scholarships",
+    "invoices": "Invoices",
+    "payments": "Payments",
+    "dues": "Overdue Dues",
+    "expenses": "Expenses",
+    "revenue": "Revenue Dashboard"
   }
 }

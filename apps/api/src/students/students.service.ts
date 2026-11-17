@@ -11,6 +11,7 @@ import {
   UpdateStudentDto,
 } from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { FeesService } from '../fees/fees.service';
 import type { AuthUser } from '../common/types/request.types';
 
 export interface FindStudentsQuery {
@@ -22,7 +23,10 @@ export interface FindStudentsQuery {
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly feesService: FeesService,
+  ) {}
 
   /**
    * List students for the tenant with search and filter support.
@@ -32,7 +36,7 @@ export class StudentsService {
     tenantId: string,
     user: AuthUser,
     query: FindStudentsQuery,
-  ) {
+  ): Promise<any[]> {
     if (!tenantId) {
       throw new BadRequestException('Tenant context is required');
     }
@@ -89,9 +93,28 @@ export class StudentsService {
             course: true,
           },
         },
+        feeAssignments: {
+          include: {
+            structure: true,
+            discount: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        feeInvoices: {
+          select: {
+            id: true,
+            invoiceNo: true,
+            amount: true,
+            paidAmount: true,
+            status: true,
+            dueDate: true,
+          },
+          orderBy: { dueDate: 'asc' },
+        },
         _count: {
           select: {
             attendanceRecords: true,
+            feeInvoices: true,
           },
         },
       },
@@ -236,7 +259,7 @@ export class StudentsService {
         },
       });
 
-      return tx.student.create({
+      const createdStudent = await tx.student.create({
         data: {
           userId: createdUser.id,
           tenantId,
@@ -261,6 +284,39 @@ export class StudentsService {
           },
         },
       });
+
+      // Auto-assign fee structure if specified or if an active structure exists for the batch's course
+      let targetStructureId = dto.structureId;
+      if (!targetStructureId && createdStudent.batch?.courseId) {
+        const defaultStructure = await tx.feeStructure.findFirst({
+          where: {
+            tenantId,
+            courseId: createdStudent.batch.courseId,
+            isActive: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        });
+        if (defaultStructure) {
+          targetStructureId = defaultStructure.id;
+        }
+      }
+
+      if (targetStructureId) {
+        await this.feesService.assignFeeInTransaction(
+          tx,
+          tenantId,
+          createdStudent.id,
+          undefined,
+          {
+            structureId: targetStructureId,
+            overrideTotal: dto.overrideTotal,
+            discountId: dto.discountId,
+            generateInvoices: true,
+          },
+        );
+      }
+
+      return createdStudent;
     });
   }
 

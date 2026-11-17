@@ -1,27 +1,82 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useQuery } from '@tanstack/react-query';
+import { get } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Users, BookOpen, CreditCard, Calendar } from 'lucide-react';
+import {
+  Users,
+  BookOpen,
+  CreditCard,
+  Calendar,
+  AlertTriangle,
+} from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 export default function DashboardPage() {
   const t = useTranslations('nav');
   const { user } = useAuth();
-  
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  // Dummy stat data for UI shell
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const canViewRevenue =
+    user?.role === 'TENANT_ADMIN' || user?.role === 'STAFF';
+
+  const { data: revenue } = useQuery({
+    queryKey: ['fees-revenue-dashboard'],
+    queryFn: () => get<any>('/fees/revenue'),
+    enabled: Boolean(canViewRevenue),
+  });
+
+  const kpis = revenue?.kpis;
+
   const stats = isSuperAdmin
     ? [
         { title: t('tenants'), value: '12', icon: Users },
         { title: 'Total Revenue', value: '৳ 2.4M', icon: CreditCard },
       ]
     : [
-        { title: t('students'), value: '1,234', icon: Users },
-        { title: t('courses'), value: '25', icon: BookOpen },
-        { title: t('batches'), value: '42', icon: Calendar },
-        { title: t('fees'), value: '৳ 450K', icon: CreditCard },
+        {
+          title: t('students'),
+          value:
+            kpis?.totalStudents !== undefined
+              ? String(kpis.totalStudents)
+              : '—',
+          icon: Users,
+        },
+        {
+          title: t('batches'),
+          value:
+            kpis?.activeBatches !== undefined
+              ? String(kpis.activeBatches)
+              : '—',
+          icon: Calendar,
+        },
+        {
+          title: 'Monthly Revenue (৳)',
+          value:
+            kpis?.monthlyCollected !== undefined
+              ? `৳${Number(kpis.monthlyCollected).toLocaleString('en-BD')}`
+              : '৳0',
+          icon: CreditCard,
+        },
+        {
+          title: 'Pending Dues (৳)',
+          value:
+            kpis?.pendingDues !== undefined
+              ? `৳${Number(kpis.pendingDues).toLocaleString('en-BD')}`
+              : '৳0',
+          icon: AlertTriangle,
+        },
       ];
 
   return (
@@ -31,7 +86,8 @@ export default function DashboardPage() {
           Welcome back, {user?.firstName}!
         </h1>
         <p className="text-muted-foreground mt-2">
-          Here's an overview of your {isSuperAdmin ? 'platform' : 'institute'}.
+          Here&apos;s an overview of your{' '}
+          {isSuperAdmin ? 'platform' : 'institute'}.
         </p>
       </div>
 
@@ -50,6 +106,43 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {canViewRevenue && revenue?.monthlyTrend && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Monthly Revenue vs Expenses (BDT ৳)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenue.monthlyTrend}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="month" fontSize={12} />
+                <YAxis fontSize={12} />
+                <Tooltip
+                  formatter={(val: any) => [
+                    `৳${Number(val).toLocaleString('en-BD')}`,
+                  ]}
+                />
+                <Legend />
+                <Bar
+                  dataKey="collected"
+                  name="Collected (৳)"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="expenses"
+                  name="Expenses (৳)"
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

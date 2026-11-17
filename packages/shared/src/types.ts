@@ -38,6 +38,39 @@ export enum AttendanceStatus {
   EXCUSED = 'EXCUSED',
 }
 
+export enum DiscountType {
+  FLAT = 'FLAT',
+  PERCENTAGE = 'PERCENTAGE',
+  SCHOLARSHIP = 'SCHOLARSHIP',
+}
+
+export enum InvoiceStatus {
+  UNPAID = 'UNPAID',
+  PARTIALLY_PAID = 'PARTIALLY_PAID',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  BKASH = 'BKASH',
+  NAGAD = 'NAGAD',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  CARD = 'CARD',
+  SSLCOMMERZ = 'SSLCOMMERZ',
+  OTHER = 'OTHER',
+}
+
+export enum ExpenseCategory {
+  SALARY = 'SALARY',
+  RENT = 'RENT',
+  UTILITIES = 'UTILITIES',
+  MARKETING = 'MARKETING',
+  EQUIPMENT = 'EQUIPMENT',
+  OTHER = 'OTHER',
+}
+
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
 export interface JwtPayload {

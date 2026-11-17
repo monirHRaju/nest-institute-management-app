@@ -23,6 +23,7 @@ import { BatchesModule } from './batches/batches.module';
 import { AdmissionsModule } from './admissions/admissions.module';
 import { StudentsModule } from './students/students.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { FeesModule } from './fees/fees.module';
 
 @Module({
   imports: [
@@ -48,7 +49,7 @@ import { AttendanceModule } from './attendance/attendance.module';
     AdmissionsModule,
     StudentsModule,
     AttendanceModule,
-    // FeesModule ← Phase 3
+    FeesModule,
   ],
   controllers: [AppController],
   providers: [
@@ -72,6 +73,8 @@ export class AppModule implements NestModule {
         { path: 'health', method: RequestMethod.GET },
         // Auth routes excluded so SUPER_ADMIN can login without tenant header
         { path: 'auth/(.*)', method: RequestMethod.ALL },
+        // SSLCommerz IPN webhook carries tenantId in body (value_a)
+        { path: 'fees/sslcommerz/ipn', method: RequestMethod.POST },
       )
       .forRoutes('*');
   }

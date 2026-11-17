@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { FeesService } from '../fees/fees.service';
 import {
   ApproveAdmissionDto,
   CreateAdmissionDto,
@@ -14,7 +15,10 @@ import { withTenant } from '@repo/db';
 
 @Injectable()
 export class AdmissionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly feesService: FeesService,
+  ) {}
 
   /**
    * Public endpoint: submit a new admission application for a tenant.
@@ -189,6 +193,46 @@ export class AdmissionsService {
         data: { status: 'APPROVED' },
         include: { course: true },
       });
+
+      // Auto-assign fee structure if specified or if an active structure exists for the application's course
+      let targetStructureId = dto.structureId;
+      if (!targetStructureId && application.courseId) {
+        const defaultStructure = await tx.feeStructure.findFirst({
+          where: {
+            tenantId,
+            courseId: application.courseId,
+            isActive: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        });
+        if (defaultStructure) {
+          targetStructureId = defaultStructure.id;
+        }
+      }
+
+      if (targetStructureId) {
+        const existingAssignments = await tx.studentFeeAssignment.count({
+          where: {
+            tenantId,
+            studentId: student.id,
+            structureId: targetStructureId,
+          },
+        });
+        if (existingAssignments === 0) {
+          await this.feesService.assignFeeInTransaction(
+            tx,
+            tenantId,
+            student.id,
+            undefined,
+            {
+              structureId: targetStructureId,
+              overrideTotal: dto.overrideTotal,
+              discountId: dto.discountId,
+              generateInvoices: true,
+            },
+          );
+        }
+      }
 
       return {
         application: updatedApplication,
