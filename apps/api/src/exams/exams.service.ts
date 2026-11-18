@@ -760,6 +760,7 @@ export class ExamsService {
       tenant: student.tenant,
       student: {
         id: student.id,
+        studentCode: student.studentCode || student.id,
         firstName: student.user.firstName,
         lastName: student.user.lastName,
         email: student.user.email,

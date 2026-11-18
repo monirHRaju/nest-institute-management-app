@@ -10,12 +10,19 @@ export interface TenantConfig {
   themeConfig: {
     primaryColor?: string;
     accentColor?: string;
+    tagline?: string;
+    heroHeading?: string;
     aboutText?: string;
     contactPhone?: string;
     contactEmail?: string;
     address?: string;
     logoUrl?: string;
     bannerUrl?: string;
+    facebookUrl?: string;
+    youtubeUrl?: string;
+    showCourses?: boolean;
+    showAdmission?: boolean;
+    showResults?: boolean;
   };
 }
 

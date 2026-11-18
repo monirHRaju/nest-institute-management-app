@@ -176,10 +176,14 @@ export class AdmissionsService {
         where: { userId: user.id },
       });
 
+      const studentCount = await tx.student.count({ where: { tenantId } });
+      const autoCode = `STU-${new Date().getFullYear()}-${String(studentCount + 1).padStart(4, '0')}`;
+
       const student = existingStudent
         ? await tx.student.update({
             where: { id: existingStudent.id },
             data: {
+              studentCode: existingStudent.studentCode || autoCode,
               batchId: dto.batchId || existingStudent.batchId,
               guardianName:
                 dto.guardianName ??
@@ -195,6 +199,7 @@ export class AdmissionsService {
           })
         : await tx.student.create({
             data: {
+              studentCode: autoCode,
               userId: user.id,
               tenantId,
               batchId: dto.batchId || null,

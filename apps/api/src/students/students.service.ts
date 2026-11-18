@@ -14,6 +14,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FeesService } from '../fees/fees.service';
 import type { AuthUser } from '../common/types/request.types';
 
+export function formatStudentCode(seq: number, year = new Date().getFullYear()): string {
+  return `STU-${year}-${String(seq).padStart(4, '0')}`;
+}
+
 export interface FindStudentsQuery {
   search?: string;
   batchId?: string;
@@ -247,6 +251,9 @@ export class StudentsService {
     const passwordHash = await bcrypt.hash(rawPassword, 12);
 
     return this.prisma.$transaction(async (tx) => {
+      const existingCount = await tx.student.count({ where: { tenantId } });
+      const studentCode = formatStudentCode(existingCount + 1);
+
       const createdUser = await tx.user.create({
         data: {
           email,
@@ -261,6 +268,7 @@ export class StudentsService {
 
       const createdStudent = await tx.student.create({
         data: {
+          studentCode,
           userId: createdUser.id,
           tenantId,
           batchId: dto.batchId || null,

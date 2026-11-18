@@ -60,8 +60,15 @@ export default async function RootLayout({
               </Link>
               <nav className="text-sm font-medium flex items-center gap-6">
                 <Link href="/" className="hover:underline">Home</Link>
-                <Link href="/courses" className="hover:underline">Courses</Link>
-                <Link href="/admission" className="hover:underline">Admission</Link>
+                {config?.themeConfig?.showCourses !== false && (
+                  <Link href="/courses" className="hover:underline">Courses</Link>
+                )}
+                {config?.themeConfig?.showAdmission !== false && (
+                  <Link href="/admission" className="hover:underline">Admission</Link>
+                )}
+                {config?.themeConfig?.showResults !== false && (
+                  <Link href="/results" className="hover:underline">Results</Link>
+                )}
                 <Link href="/#contact" className="hover:underline hidden sm:inline">Contact</Link>
                 <a
                   href={process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3000'}

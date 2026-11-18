@@ -452,6 +452,50 @@ export const SendBulkSmsSchema = z.object({
 
 export type SendBulkSmsDto = z.infer<typeof SendBulkSmsSchema>;
 
+// ─── Phase 6: Branding, Public Portal & Reports ───────────────────────────────
+
+export const UpdateTenantBrandingSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Primary color must be a valid 6-digit hex code')
+    .default('#2563eb'),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Accent color must be a valid 6-digit hex code')
+    .default('#f59e0b'),
+  logoUrl: z.string().max(500).optional().or(z.literal('')),
+  bannerUrl: z.string().max(500).optional().or(z.literal('')),
+  tagline: z.string().max(150).optional().or(z.literal('')),
+  heroHeading: z.string().max(150).optional().or(z.literal('')),
+  aboutText: z.string().max(1000).optional().or(z.literal('')),
+  contactPhone: z.string().max(30).optional().or(z.literal('')),
+  contactEmail: z.string().email().optional().or(z.literal('')),
+  address: z.string().max(300).optional().or(z.literal('')),
+  facebookUrl: z.string().max(300).optional().or(z.literal('')),
+  youtubeUrl: z.string().max(300).optional().or(z.literal('')),
+  googleMapEmbed: z.string().max(1000).optional().or(z.literal('')),
+  showCourses: z.boolean().default(true),
+  showAdmission: z.boolean().default(true),
+  showResults: z.boolean().default(true),
+});
+
+export type UpdateTenantBrandingDto = z.infer<typeof UpdateTenantBrandingSchema>;
+
+export const PublicResultLookupSchema = z.object({
+  identifier: z
+    .string()
+    .min(2, 'Student ID or Code is required')
+    .max(60),
+  phone: z
+    .string()
+    .min(4, 'Enter registered phone or last 4 digits')
+    .max(20),
+  term: z.string().max(100).optional(),
+});
+
+export type PublicResultLookupDto = z.infer<typeof PublicResultLookupSchema>;
+
 export { PayrollStatus, SmsEventType, SmsStatus };
 
 

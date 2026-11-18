@@ -28,6 +28,7 @@ import { StaffModule } from './staff/staff.module';
 import { PayrollModule } from './payroll/payroll.module';
 import { ExamsModule } from './exams/exams.module';
 import { SmsModule } from './sms/sms.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { SmsModule } from './sms/sms.module';
     PayrollModule,
     ExamsModule,
     SmsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

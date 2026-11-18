@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UsePipes,
 } from '@nestjs/common';
@@ -22,23 +23,58 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
   CreateTenantSchema,
   UpdateTenantSchema,
+  UpdateTenantBrandingSchema,
+  UpdateTenantBrandingDto,
   PaginationSchema,
   Role,
 } from '@repo/shared';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentTenant } from '../common/decorators/current-tenant.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthUser } from '../common/types/request.types';
 import { TenantsService } from './tenants.service';
 import { TenantStatus } from '@repo/db';
 
-/**
- * Tenant CRUD — Super Admin only.
- * RolesGuard will be activated in Segment 1.3.
- * For now: @Roles(Role.SUPER_ADMIN) is declared but not yet enforced.
- */
-@ApiTags('Tenants (Super Admin)')
+@ApiTags('Tenants & Branding')
 @ApiBearerAuth()
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
+
+  // GET /api/v1/tenants/stats (Super Admin platform KPIs)
+  @Get('stats')
+  @Roles(Role.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Get platform-wide tenant & usage KPIs (Super Admin)' })
+  getPlatformStats() {
+    return this.tenantsService.getPlatformStats();
+  }
+
+  // GET /api/v1/tenants/me/branding (Tenant Admin / Staff)
+  @Get('me/branding')
+  @Roles(Role.TENANT_ADMIN, Role.STAFF)
+  @ApiOperation({ summary: 'Get current tenant branding & public website themeConfig' })
+  getMyBranding(
+    @CurrentTenant('id') tenantId: string | undefined,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.tenantsService.getMyBranding(tenantId || user.tenantId || '');
+  }
+
+  // PUT /api/v1/tenants/me/branding (Tenant Admin)
+  @Put('me/branding')
+  @Roles(Role.TENANT_ADMIN)
+  @ApiOperation({ summary: 'Update current tenant branding & public website themeConfig' })
+  updateMyBranding(
+    @CurrentTenant('id') tenantId: string | undefined,
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(UpdateTenantBrandingSchema))
+    dto: UpdateTenantBrandingDto,
+  ) {
+    return this.tenantsService.updateMyBranding(
+      tenantId || user.tenantId || '',
+      dto,
+    );
+  }
 
   // POST /api/v1/tenants
   @Post()
@@ -60,13 +96,17 @@ export class TenantsController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: TenantStatus })
+  @ApiQuery({ name: 'plan', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
   findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: TenantStatus,
+    @Query('plan') plan?: string,
+    @Query('search') search?: string,
   ) {
     const pagination = PaginationSchema.parse({ page, limit });
-    return this.tenantsService.findAll(pagination, { status });
+    return this.tenantsService.findAll(pagination, { status, plan, search });
   }
 
   // GET /api/v1/tenants/:id

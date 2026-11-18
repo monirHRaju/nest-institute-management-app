@@ -143,8 +143,16 @@ export interface TenantThemeConfig {
   accentColor: string;    // e.g. "#f59e0b"
   logoUrl?: string;
   bannerUrl?: string;
+  tagline?: string;
+  heroHeading?: string;
   aboutText?: string;
   contactPhone?: string;
   contactEmail?: string;
   address?: string;
+  facebookUrl?: string;
+  youtubeUrl?: string;
+  googleMapEmbed?: string;
+  showCourses?: boolean;
+  showAdmission?: boolean;
+  showResults?: boolean;
 }

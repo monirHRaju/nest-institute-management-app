@@ -37,12 +37,48 @@ export default function DashboardPage() {
     enabled: Boolean(canViewRevenue),
   });
 
+  const { data: platformStats } = useQuery({
+    queryKey: ['platform-tenant-stats'],
+    queryFn: () => get<any>('/tenants/stats'),
+    enabled: Boolean(isSuperAdmin),
+  });
+
   const kpis = revenue?.kpis;
 
   const stats = isSuperAdmin
     ? [
-        { title: t('tenants'), value: '12', icon: Users },
-        { title: 'Total Revenue', value: '৳ 2.4M', icon: CreditCard },
+        {
+          title: t('tenants'),
+          value:
+            platformStats?.totalTenants !== undefined
+              ? String(platformStats.totalTenants)
+              : '—',
+          icon: Users,
+        },
+        {
+          title: 'Active Institutes',
+          value:
+            platformStats?.byStatus?.ACTIVE !== undefined
+              ? String(platformStats.byStatus.ACTIVE)
+              : '—',
+          icon: BookOpen,
+        },
+        {
+          title: 'Platform Students',
+          value:
+            platformStats?.totalStudents !== undefined
+              ? String(platformStats.totalStudents)
+              : '—',
+          icon: Users,
+        },
+        {
+          title: 'Platform Fee Volume',
+          value:
+            platformStats?.totalPlatformRevenue !== undefined
+              ? `৳${Number(platformStats.totalPlatformRevenue).toLocaleString('en-BD')}`
+              : '৳0',
+          icon: CreditCard,
+        },
       ]
     : [
         {

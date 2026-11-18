@@ -79,16 +79,18 @@ export function ReportCardPrintModal({
               <div className="font-semibold">{studentName}</div>
             </div>
             <div>
+              <div className="text-xs text-muted-foreground">Student / Verify Code</div>
+              <div className="font-mono font-semibold text-primary">
+                {student.studentCode || student.id}
+              </div>
+            </div>
+            <div>
               <div className="text-xs text-muted-foreground">Course</div>
               <div className="font-medium">{student.courseName || '—'}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Batch</div>
               <div className="font-medium">{student.batchName || '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Email</div>
-              <div className="font-medium">{student.email}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Guardian</div>

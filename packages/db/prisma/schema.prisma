@@ -368,6 +368,7 @@ model AdmissionApplication {
 
 model Student {
   id             String   @id @default(cuid())
+  studentCode    String?
   guardianName   String?
   guardianPhone  String?
   enrollmentDate DateTime @default(now())
@@ -391,6 +392,7 @@ model Student {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  @@unique([tenantId, studentCode])
   @@index([tenantId])
   @@index([batchId])
   @@map("students")
