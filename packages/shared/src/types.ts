@@ -71,6 +71,24 @@ export enum ExpenseCategory {
   OTHER = 'OTHER',
 }
 
+export enum PayrollStatus {
+  DRAFT = 'DRAFT',
+  APPROVED = 'APPROVED',
+  PAID = 'PAID',
+}
+
+export enum ExamType {
+  QUIZ = 'QUIZ',
+  MIDTERM = 'MIDTERM',
+  FINAL = 'FINAL',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum ExamStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+}
+
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
 export interface JwtPayload {

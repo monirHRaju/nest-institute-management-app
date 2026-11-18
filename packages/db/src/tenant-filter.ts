@@ -28,6 +28,11 @@ export const TENANT_SCOPED_MODELS = [
   'Payment',
   'Expense',
   'SmsReminderLog',
+  'StaffProfile',
+  'Payroll',
+  'Exam',
+  'ExamResult',
+  'GradeScale',
 ] as const;
 
 /**

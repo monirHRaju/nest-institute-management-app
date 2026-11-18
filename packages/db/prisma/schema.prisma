@@ -83,6 +83,24 @@ enum ExpenseCategory {
   OTHER
 }
 
+enum PayrollStatus {
+  DRAFT
+  APPROVED
+  PAID
+}
+
+enum ExamType {
+  QUIZ
+  MIDTERM
+  FINAL
+  CUSTOM
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT
 // The top-level entity. Every institute/coaching center is a Tenant.
@@ -118,6 +136,11 @@ model Tenant {
   payments              Payment[]
   expenses              Expense[]
   smsReminderLogs       SmsReminderLog[]
+  staffProfiles         StaffProfile[]
+  payrolls              Payroll[]
+  exams                 Exam[]
+  examResults           ExamResult[]
+  gradeScales           GradeScale[]
 
   @@index([slug])
   @@map("tenants")
@@ -152,8 +175,10 @@ model User {
   studentProfile    Student?
   markedAttendances AttendanceRecord[] @relation("MarkedAttendance")
   approvedDiscounts Discount[]         @relation("ApprovedDiscounts")
-  receivedPayments  Payment[]          @relation("ReceivedPayments")
-  createdExpenses   Expense[]          @relation("CreatedExpenses")
+  receivedPayments   Payment[]          @relation("ReceivedPayments")
+  createdExpenses    Expense[]          @relation("CreatedExpenses")
+  staffProfile       StaffProfile?
+  enteredExamResults ExamResult[]       @relation("EnteredExamResults")
 
   // Unique email per tenant (SUPER_ADMIN: email unique globally)
   @@unique([email, tenantId])
@@ -235,6 +260,7 @@ model Course {
   batches               Batch[]
   admissionApplications AdmissionApplication[]
   feeStructures         FeeStructure[]
+  exams                 Exam[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -268,6 +294,7 @@ model Batch {
 
   students          Student[]
   attendanceRecords AttendanceRecord[]
+  exams             Exam[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -334,6 +361,7 @@ model Student {
   discounts         Discount[]
   feeAssignments    StudentFeeAssignment[]
   feeInvoices       FeeInvoice[]
+  examResults       ExamResult[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -541,6 +569,8 @@ model Expense {
   tenantId    String
   tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  payroll     Payroll?
+
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -567,4 +597,147 @@ model SmsReminderLog {
   @@index([tenantId])
   @@index([invoiceId])
   @@map("sms_reminder_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHASE 4: STAFF & PAYROLL
+// ─────────────────────────────────────────────────────────────────────────────
+
+model StaffProfile {
+  id           String   @id @default(cuid())
+  designation  String
+  department   String?
+  joinDate     DateTime @default(now())
+  baseSalary   Decimal  @db.Decimal(12, 2)
+  bankInfo     String?
+  mobileWallet String?
+  isActive     Boolean  @default(true)
+
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  payrolls     Payroll[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("staff_profiles")
+}
+
+model Payroll {
+  id         String         @id @default(cuid())
+  month      Int
+  year       Int
+  baseAmount Decimal        @db.Decimal(12, 2)
+  allowances Decimal        @default(0) @db.Decimal(12, 2)
+  deductions Decimal        @default(0) @db.Decimal(12, 2)
+  bonus      Decimal        @default(0) @db.Decimal(12, 2)
+  netAmount  Decimal        @db.Decimal(12, 2)
+  status     PayrollStatus  @default(DRAFT)
+  paidAt     DateTime?
+  method     PaymentMethod?
+  note       String?
+
+  staffId    String
+  staff      StaffProfile   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  expenseId  String?        @unique
+  expense    Expense?       @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+
+  tenantId   String
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([staffId, month, year])
+  @@index([tenantId])
+  @@index([month, year])
+  @@map("payrolls")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHASE 4: EXAMS, RESULTS & REPORT CARDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Exam {
+  id         String     @id @default(cuid())
+  name       String
+  type       ExamType   @default(CUSTOM)
+  term       String?
+  date       DateTime
+  totalMarks Decimal    @db.Decimal(8, 2)
+  passMarks  Decimal    @db.Decimal(8, 2)
+  status     ExamStatus @default(DRAFT)
+
+  batchId    String
+  batch      Batch      @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  courseId   String
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  tenantId   String
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  results    ExamResult[]
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([tenantId])
+  @@index([batchId])
+  @@index([courseId])
+  @@map("exams")
+}
+
+model ExamResult {
+  id            String   @id @default(cuid())
+  marksObtained Decimal  @default(0) @db.Decimal(8, 2)
+  grade         String?
+  gpaPoint      Decimal? @db.Decimal(4, 2)
+  remarks       String?
+  isAbsent      Boolean  @default(false)
+
+  examId        String
+  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  enteredById   String?
+  enteredBy     User?    @relation("EnteredExamResults", fields: [enteredById], references: [id], onDelete: SetNull)
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([examId, studentId])
+  @@index([tenantId])
+  @@index([examId])
+  @@index([studentId])
+  @@map("exam_results")
+}
+
+model GradeScale {
+  id         String   @id @default(cuid())
+  grade      String
+  minPercent Decimal  @db.Decimal(5, 2)
+  maxPercent Decimal  @db.Decimal(5, 2)
+  gpaPoint   Decimal  @db.Decimal(4, 2)
+
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([tenantId, grade])
+  @@index([tenantId])
+  @@map("grade_scales")
 }

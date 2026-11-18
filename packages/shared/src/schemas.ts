@@ -2,9 +2,12 @@ import { z } from 'zod';
 import {
   AttendanceStatus,
   DiscountType,
+  ExamStatus,
+  ExamType,
   ExpenseCategory,
   InvoiceStatus,
   PaymentMethod,
+  PayrollStatus,
   Role,
 } from './types';
 
@@ -290,6 +293,123 @@ export type CreateExpenseDto = z.infer<typeof CreateExpenseSchema>;
 
 export const UpdateExpenseSchema = CreateExpenseSchema.partial();
 export type UpdateExpenseDto = z.infer<typeof UpdateExpenseSchema>;
+
+// ─── Phase 4: Staff & Payroll ─────────────────────────────────────────────────
+
+export const CreateStaffSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
+  firstName: z.string().min(1, 'First name is required').max(50),
+  lastName: z.string().min(1, 'Last name is required').max(50),
+  phone: z.string().max(20).optional(),
+  role: z.enum([Role.STAFF, Role.INSTRUCTOR]).default(Role.INSTRUCTOR),
+  designation: z.string().min(1, 'Designation is required').max(100),
+  department: z.string().max(100).optional(),
+  joinDate: z.coerce.date().optional(),
+  baseSalary: z.coerce.number().min(0, 'Base salary must be non-negative'),
+  bankInfo: z.string().max(250).optional(),
+  mobileWallet: z.string().max(50).optional(),
+});
+
+export type CreateStaffDto = z.infer<typeof CreateStaffSchema>;
+
+export const UpdateStaffSchema = z.object({
+  firstName: z.string().min(1).max(50).optional(),
+  lastName: z.string().min(1).max(50).optional(),
+  phone: z.string().max(20).nullable().optional(),
+  role: z.enum([Role.STAFF, Role.INSTRUCTOR]).optional(),
+  designation: z.string().min(1).max(100).optional(),
+  department: z.string().max(100).nullable().optional(),
+  joinDate: z.coerce.date().optional(),
+  baseSalary: z.coerce.number().min(0).optional(),
+  bankInfo: z.string().max(250).nullable().optional(),
+  mobileWallet: z.string().max(50).nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateStaffDto = z.infer<typeof UpdateStaffSchema>;
+
+export const GeneratePayrollSchema = z.object({
+  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2000).max(2100),
+});
+
+export type GeneratePayrollDto = z.infer<typeof GeneratePayrollSchema>;
+
+export const UpdatePayrollSchema = z.object({
+  allowances: z.coerce.number().min(0).optional(),
+  deductions: z.coerce.number().min(0).optional(),
+  bonus: z.coerce.number().min(0).optional(),
+  note: z.string().max(500).nullable().optional(),
+});
+
+export type UpdatePayrollDto = z.infer<typeof UpdatePayrollSchema>;
+
+export const PayPayrollSchema = z.object({
+  method: z.nativeEnum(PaymentMethod).default(PaymentMethod.BANK_TRANSFER),
+  paidAt: z.coerce.date().optional(),
+  note: z.string().max(500).optional(),
+});
+
+export type PayPayrollDto = z.infer<typeof PayPayrollSchema>;
+
+export const BulkPayrollIdsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+  method: z.nativeEnum(PaymentMethod).optional(),
+  paidAt: z.coerce.date().optional(),
+  note: z.string().max(500).optional(),
+});
+
+export type BulkPayrollIdsDto = z.infer<typeof BulkPayrollIdsSchema>;
+
+// ─── Phase 4: Exams, Results & Grade Scales ───────────────────────────────────
+
+export const CreateExamSchema = z.object({
+  name: z.string().min(1, 'Exam name is required').max(150),
+  type: z.nativeEnum(ExamType).default(ExamType.CUSTOM),
+  term: z.string().max(100).optional(),
+  date: z.coerce.date(),
+  totalMarks: z.coerce.number().positive('Total marks must be greater than 0'),
+  passMarks: z.coerce.number().min(0, 'Pass marks must be non-negative'),
+  batchId: z.string().min(1, 'Batch is required'),
+  courseId: z.string().min(1).optional(),
+});
+
+export type CreateExamDto = z.infer<typeof CreateExamSchema>;
+
+export const UpdateExamSchema = CreateExamSchema.partial().extend({
+  status: z.nativeEnum(ExamStatus).optional(),
+});
+
+export type UpdateExamDto = z.infer<typeof UpdateExamSchema>;
+
+export const ExamResultEntrySchema = z.object({
+  studentId: z.string().min(1),
+  marksObtained: z.coerce.number().min(0).default(0),
+  isAbsent: z.boolean().default(false),
+  remarks: z.string().max(250).optional(),
+});
+
+export const BulkUpsertExamResultsSchema = z.object({
+  results: z.array(ExamResultEntrySchema).min(1, 'At least one result is required'),
+});
+
+export type BulkUpsertExamResultsDto = z.infer<typeof BulkUpsertExamResultsSchema>;
+
+export const GradeScaleItemSchema = z.object({
+  grade: z.string().min(1).max(10),
+  minPercent: z.coerce.number().min(0).max(100),
+  maxPercent: z.coerce.number().min(0).max(100),
+  gpaPoint: z.coerce.number().min(0).max(5),
+});
+
+export const UpsertGradeScaleSchema = z.object({
+  scales: z.array(GradeScaleItemSchema).min(1),
+});
+
+export type UpsertGradeScaleDto = z.infer<typeof UpsertGradeScaleSchema>;
+
+export { PayrollStatus };
 
 
 

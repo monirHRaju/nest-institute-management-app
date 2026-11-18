@@ -158,6 +158,60 @@ async function main() {
     console.log('  ✓ Tenant Admin admin@star.com already exists, skipping.');
   }
 
+  // ── 4. Phase 4 Seed: Default Grade Scales & Sample Instructor ───────────────
+  const mtechTenant = await prisma.tenant.findUnique({ where: { slug: 'mtech' } });
+  const tenantsToSeed = [mtechTenant, star].filter(Boolean) as { id: string; slug: string }[];
+
+  const defaultScales = [
+    { grade: 'A+', minPercent: 80, maxPercent: 100, gpaPoint: 5.0 },
+    { grade: 'A', minPercent: 70, maxPercent: 79.99, gpaPoint: 4.0 },
+    { grade: 'A-', minPercent: 60, maxPercent: 69.99, gpaPoint: 3.5 },
+    { grade: 'B', minPercent: 50, maxPercent: 59.99, gpaPoint: 3.0 },
+    { grade: 'C', minPercent: 40, maxPercent: 49.99, gpaPoint: 2.0 },
+    { grade: 'D', minPercent: 33, maxPercent: 39.99, gpaPoint: 1.0 },
+    { grade: 'F', minPercent: 0, maxPercent: 32.99, gpaPoint: 0.0 },
+  ];
+
+  for (const t of tenantsToSeed) {
+    const scaleCount = await prisma.gradeScale.count({ where: { tenantId: t.id } });
+    if (scaleCount === 0) {
+      await prisma.gradeScale.createMany({
+        data: defaultScales.map((s) => ({ ...s, tenantId: t.id })),
+      });
+      console.log(`  ✅ Default grade scales seeded for ${t.slug}`);
+    }
+  }
+
+  if (mtechTenant) {
+    const existingInstructor = await prisma.user.findFirst({
+      where: { email: 'instructor@mtech.com', tenantId: mtechTenant.id },
+    });
+    if (!existingInstructor) {
+      const instrUser = await prisma.user.create({
+        data: {
+          email: 'instructor@mtech.com',
+          passwordHash: await hash('Staff123!'),
+          firstName: 'Rahim',
+          lastName: 'Uddin',
+          phone: '01711000001',
+          role: Role.INSTRUCTOR,
+          tenantId: mtechTenant.id,
+        },
+      });
+      await prisma.staffProfile.create({
+        data: {
+          userId: instrUser.id,
+          tenantId: mtechTenant.id,
+          designation: 'Senior Instructor',
+          department: 'Software Engineering',
+          baseSalary: 35000,
+          mobileWallet: '01711000001',
+        },
+      });
+      console.log('  ✅ Sample Instructor: instructor@mtech.com / Staff123!');
+    }
+  }
+
   console.log('\n🎉 Seed complete!\n');
   console.log('  Credentials:');
   console.log('  ┌─────────────────────────────────────────────────────────┐');

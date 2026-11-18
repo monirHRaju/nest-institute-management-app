@@ -123,6 +123,11 @@ export async function patch<T>(url: string, data?: any, config = {}): Promise<T>
   return response.data;
 }
 
+export async function put<T>(url: string, data?: any, config = {}): Promise<T> {
+  const response = await apiClient.put<T>(url, data, config);
+  return response.data;
+}
+
 export async function del<T>(url: string, config = {}): Promise<T> {
   const response = await apiClient.delete<T>(url, config);
   return response.data;

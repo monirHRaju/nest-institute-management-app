@@ -16,6 +16,9 @@ import {
   LayoutDashboard,
   Tags,
   UserPlus,
+  UserCog,
+  Wallet,
+  GraduationCap,
 } from 'lucide-react';
 
 import {
@@ -67,20 +70,26 @@ export function AppSidebar() {
             { title: t('myBatches'), url: '/dashboard/batches', icon: Calendar },
             { title: t('students'), url: '/dashboard/students', icon: Users },
             { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+            { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },
+            { title: 'Payroll', url: '/dashboard/payroll', icon: Wallet },
           ]
         : role === 'STUDENT'
           ? [
               { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
               { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
               { title: t('myFees'), url: '/dashboard/fees', icon: CreditCard },
+              { title: 'Results', url: '/dashboard/exams', icon: GraduationCap },
             ]
           : [
               { title: t('dashboard'), url: '/dashboard', icon: LayoutDashboard },
               { title: t('admissions'), url: '/dashboard/admissions', icon: UserPlus },
               { title: t('students'), url: '/dashboard/students', icon: Users },
+              { title: 'Staff', url: '/dashboard/staff', icon: UserCog },
+              { title: 'Payroll', url: '/dashboard/payroll', icon: Wallet },
               { title: 'Categories', url: '/dashboard/categories', icon: Tags },
               { title: t('courses'), url: '/dashboard/courses', icon: BookOpen },
               { title: t('batches'), url: '/dashboard/batches', icon: Calendar },
+              { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },
               { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },
               { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
               { title: t('reports'), url: '/dashboard/reports', icon: BarChart },
