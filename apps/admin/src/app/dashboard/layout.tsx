@@ -2,6 +2,7 @@
 
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
+import { NotificationBell } from '@/components/notification-bell';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -31,7 +32,7 @@ export default function DashboardLayout({
             EduManage Dashboard
           </div>
           <div className="ml-auto flex items-center space-x-4">
-            {/* Theme & Lang toggles can go here */}
+            <NotificationBell />
           </div>
         </header>
         <div className="flex-1 p-6 bg-muted/20">

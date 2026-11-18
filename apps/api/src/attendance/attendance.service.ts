@@ -8,13 +8,18 @@ import {
   AttendanceStatus,
   MarkBatchAttendanceDto,
   Role,
+  SmsEventType,
 } from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { SmsService } from '../sms/sms.service';
 import type { AuthUser } from '../common/types/request.types';
 
 @Injectable()
 export class AttendanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly smsService?: SmsService,
+  ) {}
 
   private normalizeDate(dateStr?: string): Date {
     const isoDate =
@@ -179,6 +184,35 @@ export class AttendanceService {
         }),
       ),
     );
+
+    const absentIds = dto.records
+      .filter((r) => r.status === AttendanceStatus.ABSENT)
+      .map((r) => r.studentId);
+
+    if (absentIds.length > 0 && this.smsService) {
+      const absentStudents = await this.prisma.student.findMany({
+        where: { tenantId, id: { in: absentIds } },
+        include: {
+          user: { select: { firstName: true, lastName: true, phone: true } },
+          tenant: { select: { name: true } },
+        },
+      });
+      for (const s of absentStudents) {
+        void this.smsService.dispatchEventSms({
+          tenantId,
+          eventType: SmsEventType.ATTENDANCE_ABSENT,
+          phones: [s.guardianPhone, s.user.phone],
+          vars: {
+            instituteName: s.tenant.name,
+            studentName: `${s.user.firstName} ${s.user.lastName}`,
+            batchName: batch.name,
+            date: dto.date,
+          },
+          relatedType: 'AttendanceRecord',
+          relatedId: s.id,
+        });
+      }
+    }
 
     return {
       success: true,

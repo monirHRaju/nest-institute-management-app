@@ -101,6 +101,26 @@ enum ExamStatus {
   PUBLISHED
 }
 
+enum SmsEventType {
+  ADMISSION_RECEIVED
+  ADMISSION_APPROVED
+  FEE_INVOICE_CREATED
+  FEE_PAYMENT_RECEIVED
+  FEE_OVERDUE_REMINDER
+  ATTENDANCE_ABSENT
+  EXAM_RESULT_PUBLISHED
+  PAYROLL_PAID
+  CUSTOM_BULK
+  TEST_SMS
+}
+
+enum SmsStatus {
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT
 // The top-level entity. Every institute/coaching center is a Tenant.
@@ -141,6 +161,10 @@ model Tenant {
   exams                 Exam[]
   examResults           ExamResult[]
   gradeScales           GradeScale[]
+  smsSettings           SmsSettings?
+  smsTemplates          SmsTemplate[]
+  smsLogs               SmsLog[]
+  notifications         Notification[]
 
   @@index([slug])
   @@map("tenants")
@@ -179,6 +203,7 @@ model User {
   createdExpenses    Expense[]          @relation("CreatedExpenses")
   staffProfile       StaffProfile?
   enteredExamResults ExamResult[]       @relation("EnteredExamResults")
+  notifications      Notification[]
 
   // Unique email per tenant (SUPER_ADMIN: email unique globally)
   @@unique([email, tenantId])
@@ -740,4 +765,93 @@ model GradeScale {
   @@unique([tenantId, grade])
   @@index([tenantId])
   @@map("grade_scales")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHASE 5: SMS GATEWAY (BULKSMSBD) & NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model SmsSettings {
+  id              String    @id @default(cuid())
+  provider        String    @default("BULKSMSBD")
+  apiKeyEncrypted String?
+  apiKeyHint      String?
+  senderId        String?
+  adminPhone      String?
+  isEnabled       Boolean   @default(false)
+  enabledEvents   Json      @default("{}")
+  lastBalance     String?
+  lastBalanceAt   DateTime?
+
+  tenantId        String    @unique
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("sms_settings")
+}
+
+model SmsTemplate {
+  id        String       @id @default(cuid())
+  eventType SmsEventType
+  body      String
+  isActive  Boolean      @default(true)
+
+  tenantId  String
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([tenantId, eventType])
+  @@index([tenantId])
+  @@map("sms_templates")
+}
+
+model SmsLog {
+  id               String       @id @default(cuid())
+  phone            String
+  message          String
+  eventType        SmsEventType @default(CUSTOM_BULK)
+  status           SmsStatus    @default(QUEUED)
+  provider         String       @default("BULKSMSBD")
+  providerCode     String?
+  providerResponse String?
+  segments         Int          @default(1)
+  relatedType      String?
+  relatedId        String?
+  sentAt           DateTime     @default(now())
+
+  tenantId         String
+  tenant           Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime     @default(now())
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([eventType])
+  @@index([sentAt])
+  @@map("sms_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  type      String   @default("INFO")
+  link      String?
+  isRead    Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId, isRead])
+  @@map("notifications")
 }

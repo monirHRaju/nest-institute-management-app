@@ -12,9 +12,11 @@ import {
   PayPayrollDto,
   PayrollStatus,
   Role,
+  SmsEventType,
   UpdatePayrollDto,
 } from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { SmsService } from '../sms/sms.service';
 import type { AuthUser } from '../common/types/request.types';
 
 export function computeNetSalary(
@@ -36,7 +38,10 @@ export interface FindPayrollQuery {
 
 @Injectable()
 export class PayrollService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly smsService?: SmsService,
+  ) {}
 
   async findAll(
     tenantId: string,
@@ -323,6 +328,7 @@ export class PayrollService {
                   firstName: true,
                   lastName: true,
                   email: true,
+                  phone: true,
                   role: true,
                 },
               },
@@ -331,6 +337,24 @@ export class PayrollService {
           expense: true,
         },
       });
+    }).then((paidRecord) => {
+      if (this.smsService) {
+        void this.smsService.dispatchEventSms({
+          tenantId,
+          eventType: SmsEventType.PAYROLL_PAID,
+          phones: [paidRecord.staff.user.phone, paidRecord.staff.mobileWallet],
+          vars: {
+            staffName: staffName,
+            amount: Number(paidRecord.netAmount).toLocaleString('en-BD'),
+            period: `${monthPadded}/${existing.year}`,
+            method: paidRecord.method || 'BANK_TRANSFER',
+            instituteName: 'Institute',
+          },
+          relatedType: 'Payroll',
+          relatedId: paidRecord.id,
+        });
+      }
+      return paidRecord;
     });
   }
 

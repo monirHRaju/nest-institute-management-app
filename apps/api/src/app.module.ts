@@ -27,6 +27,7 @@ import { FeesModule } from './fees/fees.module';
 import { StaffModule } from './staff/staff.module';
 import { PayrollModule } from './payroll/payroll.module';
 import { ExamsModule } from './exams/exams.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ExamsModule } from './exams/exams.module';
     StaffModule,
     PayrollModule,
     ExamsModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [

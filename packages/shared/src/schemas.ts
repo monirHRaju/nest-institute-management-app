@@ -9,6 +9,8 @@ import {
   PaymentMethod,
   PayrollStatus,
   Role,
+  SmsEventType,
+  SmsStatus,
 } from './types';
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
@@ -409,7 +411,48 @@ export const UpsertGradeScaleSchema = z.object({
 
 export type UpsertGradeScaleDto = z.infer<typeof UpsertGradeScaleSchema>;
 
-export { PayrollStatus };
+// ─── Phase 5: SMS Gateway & Notifications ─────────────────────────────────────
+
+export const UpdateSmsSettingsSchema = z.object({
+  apiKey: z.string().max(250).optional(),
+  senderId: z.string().max(30).optional().nullable(),
+  adminPhone: z.string().max(30).optional().nullable(),
+  isEnabled: z.boolean().optional(),
+  enabledEvents: z.record(z.string(), z.boolean()).optional(),
+});
+
+export type UpdateSmsSettingsDto = z.infer<typeof UpdateSmsSettingsSchema>;
+
+export const SendTestSmsSchema = z.object({
+  phone: z.string().max(30).optional(),
+  message: z.string().min(1).max(1000).optional(),
+});
+
+export type SendTestSmsDto = z.infer<typeof SendTestSmsSchema>;
+
+export const SmsTemplateItemSchema = z.object({
+  eventType: z.nativeEnum(SmsEventType),
+  body: z.string().min(1).max(1000),
+  isActive: z.boolean().default(true),
+});
+
+export const UpsertSmsTemplatesSchema = z.object({
+  templates: z.array(SmsTemplateItemSchema).min(1),
+});
+
+export type UpsertSmsTemplatesDto = z.infer<typeof UpsertSmsTemplatesSchema>;
+
+export const SendBulkSmsSchema = z.object({
+  targetType: z.enum(['BATCH', 'COURSE', 'ALL_STUDENTS', 'ALL_STAFF', 'CUSTOM']),
+  batchId: z.string().optional(),
+  courseId: z.string().optional(),
+  customPhones: z.array(z.string()).optional(),
+  message: z.string().min(1, 'Message is required').max(1500),
+});
+
+export type SendBulkSmsDto = z.infer<typeof SendBulkSmsSchema>;
+
+export { PayrollStatus, SmsEventType, SmsStatus };
 
 
 

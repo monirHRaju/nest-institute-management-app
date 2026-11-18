@@ -19,6 +19,7 @@ import {
   UserCog,
   Wallet,
   GraduationCap,
+  MessageSquare,
 } from 'lucide-react';
 
 import {
@@ -92,6 +93,7 @@ export function AppSidebar() {
               { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },
               { title: t('fees'), url: '/dashboard/fees', icon: CreditCard },
               { title: t('attendance'), url: '/dashboard/attendance', icon: ClipboardList },
+              { title: 'SMS & Alerts', url: '/dashboard/sms', icon: MessageSquare },
               { title: t('reports'), url: '/dashboard/reports', icon: BarChart },
               { title: t('settings'), url: '/dashboard/settings', icon: Settings },
             ];

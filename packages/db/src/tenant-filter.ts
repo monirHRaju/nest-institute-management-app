@@ -33,6 +33,10 @@ export const TENANT_SCOPED_MODELS = [
   'Exam',
   'ExamResult',
   'GradeScale',
+  'SmsSettings',
+  'SmsTemplate',
+  'SmsLog',
+  'Notification',
 ] as const;
 
 /**

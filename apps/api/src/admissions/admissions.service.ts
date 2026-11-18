@@ -10,14 +10,17 @@ import {
   ApproveAdmissionDto,
   CreateAdmissionDto,
   Role,
+  SmsEventType,
 } from '@repo/shared';
 import { withTenant } from '@repo/db';
+import { SmsService } from '../sms/sms.service';
 
 @Injectable()
 export class AdmissionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly feesService: FeesService,
+    private readonly smsService: SmsService,
   ) {}
 
   /**
@@ -49,7 +52,22 @@ export class AdmissionsService {
       }),
       include: {
         course: true,
+        tenant: { select: { name: true } },
       },
+    });
+
+    void this.smsService.dispatchEventSms({
+      tenantId,
+      eventType: SmsEventType.ADMISSION_RECEIVED,
+      phones: [application.phone],
+      vars: {
+        studentName: application.name,
+        courseName: application.course.name,
+        instituteName: application.tenant.name,
+      },
+      relatedType: 'AdmissionApplication',
+      relatedId: application.id,
+      notifyAdminAlso: true,
     });
 
     return {
@@ -238,6 +256,20 @@ export class AdmissionsService {
         application: updatedApplication,
         student,
       };
+    });
+
+    void this.smsService.dispatchEventSms({
+      tenantId,
+      eventType: SmsEventType.ADMISSION_APPROVED,
+      phones: [application.phone, application.guardianPhone],
+      vars: {
+        studentName: application.name,
+        courseName: result.application.course?.name || 'Course',
+        batchName: dto.batchId || 'Assigned Batch',
+        instituteName: 'Institute',
+      },
+      relatedType: 'Student',
+      relatedId: result.student.id,
     });
 
     return {

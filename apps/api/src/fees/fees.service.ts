@@ -19,12 +19,14 @@ import {
   PaymentMethod,
   RecordPaymentDto,
   Role,
+  SmsEventType,
   UpdateDiscountDto,
   UpdateExpenseDto,
   UpdateFeeStructureDto,
   UpdateInvoiceDto,
 } from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { SmsService } from '../sms/sms.service';
 import type { AuthUser } from '../common/types/request.types';
 
 export interface InvoiceFilterQuery {
@@ -51,6 +53,7 @@ export class FeesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly smsService?: SmsService,
   ) {}
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -1335,20 +1338,28 @@ export class FeesService {
     const dueDateStr = new Date(invoice.dueDate).toLocaleDateString('en-GB');
     const message = `Dear ${invoice.student.user.firstName}, your fee due of BDT ${dueAmt} for ${invoice.invoiceNo} (${invoice.tenant.name}) was due on ${dueDateStr}. Please pay promptly.`;
 
-    const token = this.config.get<string>('GREENWEB_SMS_TOKEN');
     let status = 'STUBBED';
-
-    if (token && token !== 'your_greenweb_token') {
-      try {
-        const url = `http://api.greenweb.com.bd/api.php?token=${encodeURIComponent(token)}&to=${encodeURIComponent(phone)}&message=${encodeURIComponent(message)}`;
-        const res = await fetch(url);
-        status = res.ok ? 'SENT' : 'FAILED';
-      } catch (e) {
-        this.logger.warn(`Green Web BD SMS dispatch failed: ${e}`);
+    if (this.smsService) {
+      const dispatchRes = await this.smsService.dispatchEventSms({
+        tenantId,
+        eventType: SmsEventType.FEE_OVERDUE_REMINDER,
+        phones: [phone],
+        vars: {
+          studentName: invoice.student.user.firstName,
+          amount: dueAmt,
+          invoiceNo: invoice.invoiceNo,
+          dueDate: dueDateStr,
+          instituteName: invoice.tenant.name,
+        },
+        relatedType: 'FeeInvoice',
+        relatedId: invoice.id,
+        force: true,
+      });
+      if (dispatchRes?.sent) {
+        status = 'SENT';
+      } else if (dispatchRes?.status === 'FAILED') {
         status = 'FAILED';
       }
-    } else {
-      this.logger.log(`[SMS-STUB -> ${phone}]: ${message}`);
     }
 
     return this.prisma.smsReminderLog.create({
@@ -1358,7 +1369,7 @@ export class FeesService {
         phone,
         message,
         status,
-        provider: 'GREENWEB_BD',
+        provider: 'BULKSMSBD',
       },
     });
   }

@@ -9,10 +9,12 @@ import {
   CreateExamDto,
   ExamStatus,
   Role,
+  SmsEventType,
   UpdateExamDto,
   UpsertGradeScaleDto,
 } from '@repo/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { SmsService } from '../sms/sms.service';
 import type { AuthUser } from '../common/types/request.types';
 
 export interface GradeScaleRule {
@@ -77,7 +79,10 @@ export interface FindExamsQuery {
 
 @Injectable()
 export class ExamsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly smsService: SmsService,
+  ) {}
 
   // ── Grade Scales ───────────────────────────────────────────────────────────
 
@@ -298,12 +303,54 @@ export class ExamsService {
   }
 
   async publish(tenantId: string, id: string, user: AuthUser): Promise<any> {
-    await this.findOne(tenantId, id, user);
+    const exam = await this.findOne(tenantId, id, user);
 
-    return this.prisma.exam.update({
+    const updated = await this.prisma.exam.update({
       where: { id },
       data: { status: ExamStatus.PUBLISHED },
     });
+
+    // Notify graded students via SMS (if EXAM_RESULT_PUBLISHED event is enabled) + in-app notification
+    const results = await this.prisma.examResult.findMany({
+      where: { tenantId, examId: id },
+      include: {
+        student: {
+          include: {
+            user: { select: { id: true, firstName: true, phone: true } },
+            tenant: { select: { name: true } },
+          },
+        },
+      },
+    });
+
+    for (const r of results) {
+      void this.smsService.createInAppNotification({
+        tenantId,
+        userId: r.student.user.id,
+        title: `Result Published: ${exam.name}`,
+        body: `Marks: ${Number(r.marksObtained)}/${Number(exam.totalMarks)} (Grade: ${r.grade || '-'})`,
+        type: 'EXAM_RESULT',
+        link: '/dashboard/exams',
+      });
+
+      void this.smsService.dispatchEventSms({
+        tenantId,
+        eventType: SmsEventType.EXAM_RESULT_PUBLISHED,
+        phones: [r.student.user.phone, r.student.guardianPhone],
+        vars: {
+          instituteName: r.student.tenant.name,
+          examName: exam.name,
+          studentName: r.student.user.firstName,
+          marks: Number(r.marksObtained),
+          totalMarks: Number(exam.totalMarks),
+          grade: r.grade || '-',
+        },
+        relatedType: 'ExamResult',
+        relatedId: r.id,
+      });
+    }
+
+    return updated;
   }
 
   async remove(tenantId: string, id: string, user: AuthUser): Promise<any> {

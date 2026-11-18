@@ -89,6 +89,26 @@ export enum ExamStatus {
   PUBLISHED = 'PUBLISHED',
 }
 
+export enum SmsEventType {
+  ADMISSION_RECEIVED = 'ADMISSION_RECEIVED',
+  ADMISSION_APPROVED = 'ADMISSION_APPROVED',
+  FEE_INVOICE_CREATED = 'FEE_INVOICE_CREATED',
+  FEE_PAYMENT_RECEIVED = 'FEE_PAYMENT_RECEIVED',
+  FEE_OVERDUE_REMINDER = 'FEE_OVERDUE_REMINDER',
+  ATTENDANCE_ABSENT = 'ATTENDANCE_ABSENT',
+  EXAM_RESULT_PUBLISHED = 'EXAM_RESULT_PUBLISHED',
+  PAYROLL_PAID = 'PAYROLL_PAID',
+  CUSTOM_BULK = 'CUSTOM_BULK',
+  TEST_SMS = 'TEST_SMS',
+}
+
+export enum SmsStatus {
+  QUEUED = 'QUEUED',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+  SKIPPED = 'SKIPPED',
+}
+
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
 export interface JwtPayload {
